@@ -5,7 +5,7 @@ clear;      % 작업 공간(Workspace)의 모든 변수 삭제
 PsychDefaultSetup(2); % PTB 초기 설정 기본값 세팅 (색상 범위 0~1 등)
 
 Screen('Preference', 'SkipSyncTests', 1); % 화면 동기화 테스트 건너뛰기 (디버깅용)
-Screen('Preference', 'ConserveVRAM', 16384); % VRAM 절약을 위한 특수 설정 적용. 인텔 맥북에서 돌아가게 하기 위해서 설정한 값
+Screen('Preference', 'ConserveVRAM', 16384); % VRAM 절약을 위한 특수 설정 적용. 호환성 설정을 위해 16384를 사용. 2의 제곱으로 표시한다. 실제 실험을 위해선 지양하는 것이 좋다. 
 
 screens = Screen('Screens'); % 사용 가능한 화면(모니터) 번호 목록 가져오기
 screenNumber = 0; % 자극을 띄울 주 화면 번호 설정 (0은 주 모니터)

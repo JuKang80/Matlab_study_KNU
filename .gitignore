@@ -1,0 +1,11 @@
+# MATLAB 데이터 및 임시 파일 차단
+*.mat
+*.asv
+*.csv
+*.txt
+*.xlsx
+*.xls
+*.dat
+*.hwp
+*.pdf
+*.docx

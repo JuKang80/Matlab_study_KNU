@@ -63,6 +63,10 @@ try
     % 마지막에 오는 2는 안티앨리어싱이라고 픽셀을 대각선으로 그리면 계단현상(깨지는현상)이 나타나는데 그걸 매끄럽게 그려주게 해준다. 
     Screen('Flip', window); % 백버퍼에 그려둔 것을 프론트버퍼로 flip하는 것이다. 
 
+    % Save screenshot
+    Screenshot = Screen('GetImage', window);
+    imwrite(Screenshot, 'stimulus_output_1.png');
+
     KbStrokeWait; % 키보드 응답 받을때까지 기다리는 것이다. 
 
     %% TASK 2. 방위 45도 선분은 빨간색, 방위 60도 선분은 초록색, 방위 90도 선분은 파란색인 100픽셀짜리 선분을 10개씩 그리세요.
@@ -93,7 +97,7 @@ try
         currentColor = color2(i, :); % 현재 루프 차례의 1행 3열 RGB 색 행을 추출
 
         for k = 1:10 % 각 조건(각도와 색)에 맞는 그림을 그린다. 
-            cx = rand * windowRect(3); % 선분을 그릴때의 중앙값이 어디라 언급이 없기애 랜덤하게 처리했다. 
+            cx = rand * windowRect(3); % 선분을 그릴때의 중앙값이 어디라 언급이 없기에 랜덤하게 처리했다. 
             cy = rand * windowRect(4); % y축의 값을 랜덤하게 하나 가져온다. 
 
             idx = (lineIdx-1)*2 + 1; % 1,3,5,7,9,...로 증가하여 인덱스를 참조하게 만들기 위해 넣었다. 
@@ -122,6 +126,10 @@ try
     % 안티앨리어싱은 0으로 두어 해제하였다. 
     % 3번째 인자는 선 두께(현재 2픽셀), 네번째는 색인데 아까 저장한 대로 출력되게 하였다. 
     Screen('Flip', window);
+
+    % Save screenshot
+    Screenshot = Screen('GetImage', window);
+    imwrite(Screenshot, 'stimulus_output_2.png');
 
     KbStrokeWait;
         
@@ -187,6 +195,10 @@ try
     Screen('FillRect', window, gray);
     Screen('DrawLines', window, xy_mat3, 2, color_mat3, [0 0], 0);
     Screen('Flip', window);
+
+    % Save screenshot
+    Screenshot = Screen('GetImage', window);
+    imwrite(Screenshot, 'stimulus_output_3.png');
     KbStrokeWait;
 
 
@@ -202,4 +214,4 @@ catch info
     sca;
     ShowCursor; % 에러가 나서 작동이 중단될 경우 마우스를 다시 보이게 만드는 것이다. 
     rethrow(info); % try 블록 안에서 문제가 보통 생기고 그걸 해결해야 하기 때문에 rethrow를 사용했다. 
-end
+    endd

@@ -107,11 +107,24 @@ try
             xy_mat2(1, idx+1) = cx + (lineLen2/2) * sind(currentAngle); % end point의 x값 
             xy_mat2(2, idx+1) = cy + (lineLen2/2) * cosd(currentAngle);% end point의 y값
 
-            color_mat2(:, idx) = currentColor'; % 현재 k를 1이라고 가정하면 
+
+
+
+
+        
+            color_mat3(:, idx:idx+1) = repmat(randColor', 1,2);
+            % 우변의 repmat은 배열을 원하는 개수 만큼 복사하여 붙여넣는 함수이다.
+            % 원하는 배열이 randColor을 transpose한 것인데, 즉 1행 3열값을 3열 1행 값으로 바꾼다. 
+            % 그래서 동작하는 것은 3행 1열짜리 열벡터를 행 방향으로 1번(그대로), 열 방향으로 2번 복사하여 3행 2열 형태의 행렬로 만든다.
+            % randColor'은 이미 3행 1열의 데이터이므로 행을 더 늘릴 필요 없기 때문에, 1번(그대로) 유지했다. 
+
+
+            %% 아래 코드를 좀더 간결화 한 것이 위의 코드이다. 
+            %color_mat2(:, idx) = currentColor'; % 현재 k를 1이라고 가정하면 
             % idx = 1, color_mat2의 모든 행과 1열의 값을 currentColor로 저장해야 한다.
             % 그러면 결국 transpose(')로 바꾸어진, 1행 3열의 값으로 color_mat2에 값이
             % 저장된다. 
-            color_mat2(:, idx+1) = currentColor';
+            %color_mat2(:, idx+1) = currentColor';
             % DrawLines를 할 때 start point와 end point에 대한 값이 각각 필요하므로
             % 전체행과 2열에 대해서도 현재 1번 줄을 그릴때 필요한 색으로 바꾸어 준다(transpose)
 

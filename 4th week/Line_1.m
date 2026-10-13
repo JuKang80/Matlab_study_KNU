@@ -40,6 +40,11 @@ try
     Screen('DrawLines', window, xy_mat1, 2, [0 0 0], [0 0], 2);
     Screen('Flip', window);
 
+    % Save screenshot
+    Screenshot = Screen('GetImage', window);
+    imwrite(Screenshot, 'stimulus_output_1.png');
+
+
     KbStrokeWait;
 
     %% Task 2
@@ -79,6 +84,11 @@ try
     Screen('FillRect', window, gray);
     Screen('DrawLines', window, xy_mat2, 2, color_mat2, [0 0], 0);
     Screen('Flip', window);
+
+    % Save screenshot
+    Screenshot = Screen('GetImage', window);
+    imwrite(Screenshot, 'stimulus_output_2.png');
+
 
     KbStrokeWait;
 
@@ -131,9 +141,9 @@ try
 
     KbStrokeWait;
 
-    %% Save screenshot
+    % Save screenshot
     Screenshot = Screen('GetImage', window);
-    imwrite(Screenshot, 'stimulus_output_1.png');
+    imwrite(Screenshot, 'stimulus_output_3.png');
 
     sca;
     ShowCursor;

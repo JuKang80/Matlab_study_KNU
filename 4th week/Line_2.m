@@ -34,10 +34,19 @@ try
             idx = (i-1)*2 + 1;
 
             % 각각 선분 길이 좌표 구하는 코드 
-            xy_mat(1, idx) = cx - (lineLen/2) * sind(angle); 
-            xy_mat(2, idx) = cy - (lineLen/2) * cosd(angle);
-            xy_mat(1, idx+1) = cx + (lineLen/2) * sind(angle);
-            xy_mat(2, idx+1) = cy + (lineLen/2) * cosd(angle);
+            %xy_mat(1, idx) = cx - (lineLen/2) * sind(angle); 
+            %xy_mat(2, idx) = cy - (lineLen/2) * cosd(angle);
+            %xy_mat(1, idx+1) = cx + (lineLen/2) * sind(angle);
+            %xy_mat(2, idx+1) = cy + (lineLen/2) * cosd(angle);
+
+
+            % 다른 방식 
+            % 선분의 반 길이를 x, y 방향으로 변환
+            [dx, dy] = pol2cart(deg2rad(90-angle), lineLen/2);
+
+            % 선분의 양 끝점 좌표 계산
+            xy_mat(:, idx)   = [cx-dx; cy-dy];
+            xy_mat(:, idx+1) = [cx+dx; cy+dy];
 
             color_mat(:, idx) = RandColor';
             color_mat(:, idx+1) = RandColor';

@@ -1,3 +1,4 @@
+
 clear;
 clc;
 close all;
@@ -17,19 +18,38 @@ try
     Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     Screen('Flip', window);
 
-    %% Task 1. 키보드를 누르면 색, 길이, 방위, 위치가 랜덤하게 변하는 20개의 선분을 그리세요. 전환 횟수는 최소 5회입니다.
+    %% 그리드 설정
+    numCols = 5;
+    numRows = 4;
+    numLines = 20;
 
+    cellW = windowRect(3) / numCols;
+    cellH = windowRect(4) / numRows;
+
+    %% Task 1. 랜덤 선분 20개 그리기
     for screenIdx = 1:6
-        numLines = 20;
+
         xy_mat = zeros(2, numLines * 2);
         color_mat = zeros(3, numLines * 2);
 
+        % 셀 번호 무작위 선택
+        cellOrder = randperm(20);
+
         for i = 1:numLines
+
+            % 셀 번호를 행과 열로 변환
+            row = floor((cellOrder(i)-1) / numCols);
+            col = mod(cellOrder(i)-1, numCols);
+
+            % 셀 중앙에 선분 배치
+            cx = (col + 0.5) * cellW;
+            cy = (row + 0.5) * cellH;
+
+            % 선분의 길이, 방위, 색상 랜덤 설정
             angle = rand * 360;
             lineLen = 50 + rand * 100;
             RandColor = rand(1, 3) * 255;
-            cx = rand * windowRect(3);
-            cy = rand * windowRect(4);
+
             idx = (i-1)*2 + 1;
 
             %% 방식 1. 기존 좌표 계산 방식
@@ -43,24 +63,24 @@ try
             % xy_mat(:, idx)   = [cx-dx; cy-dy];
             % xy_mat(:, idx+1) = [cx+dx; cy+dy];
 
-            %% 방식 3. x, y 방향 이동량을 계산하여 양 끝점 구하기
+            %% 방식 3. x, y 방향 이동량으로 양 끝점 계산
             dx = (lineLen/2) * sind(angle);
             dy = (lineLen/2) * cosd(angle);
 
             xy_mat(:, idx)   = [cx-dx; cy-dy];
             xy_mat(:, idx+1) = [cx+dx; cy+dy];
 
+            % 선분 색상 지정
             color_mat(:, idx) = RandColor';
             color_mat(:, idx+1) = RandColor';
+
         end
 
         Screen('FillRect', window, gray);
         Screen('DrawLines', window, xy_mat, 2, color_mat, [0 0], 0);
         Screen('Flip', window);
 
-        %% Task 2. 전환 횟수만큼의 사진 파일을 만드세요. 각각의 화면을 사진 파일로 저장하시면 됩니다.
-        % 첫 화면: pic1.png / 두 번째 화면: pic2.png
-
+        %% Task 2. 화면 이미지 저장
         Screenshot = Screen('GetImage', window);
         fileName = sprintf('pic%d.png', screenIdx);
         imwrite(Screenshot, fileName);

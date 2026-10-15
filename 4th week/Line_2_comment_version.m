@@ -84,8 +84,8 @@ try
 
             %% 또 다른 방법
             % 선분의 반 길이를 x, y 방향으로 계산
-            % dx = (lineLen/2) * sind(angle);
-            % dy = (lineLen/2) * cosd(angle);
+            dx = (lineLen/2) * sind(angle);
+            dy = (lineLen/2) * cosd(angle);
 
             % 선분의 양 끝점 좌표 계산
             % cx: 선분의 x좌표, cy: 선분의 y좌표

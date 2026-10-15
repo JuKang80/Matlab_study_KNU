@@ -17,110 +17,123 @@ try
     Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     Screen('Flip', window);
 
-    %% 1. 키보드를 누르면 색, 길이, 방위, 위치가 랜덤하게 변하는 20개의 선분을 그리세요. 전환 횟수는 최소 5회입니다.
+    %% 선분의 위치를 지정하기 위한 좌표 생성
+    xPositions = linspace(100, windowRect(3)-100, 10);
+    yPositions = linspace(100, windowRect(4)-100, 10);
+    % linspace는 지정한 범위 안에서 일정한 간격의 숫자를 만들어 주는 함수이다.
+    % 화면의 가로, 세로 방향으로 각각 10개의 좌표 후보를 만든다.
+    % 화면의 가장자리에서 100픽셀 정도 안쪽부터 좌표를 생성한다.
+    % 이렇게 하면 화면 전체에서 아무 좌표나 뽑는 대신, 미리 만든 좌표 중에서 위치를 선택할 수 있다.
 
-    %% 화면을 칸으로 나누기
-    numCols = 5; % 화면을 가로 방향으로 5칸으로 나눈다.
-    numRows = 4; % 화면을 세로 방향으로 4칸으로 나눈다.
-    numLines = 20; % 제시할 자극 20개를 선언한다.
+    %% Task 1. 랜덤 선분 20개 그리기
+    numLines = 20; % 제시할 선분의 개수를 20개로 설정한다.
 
-    cellW = windowRect(3) / numCols; % 화면 너비를 5칸으로 나누어 한 칸의 너비를 구한다.
-    cellH = windowRect(4) / numRows; % 화면 높이를 4칸으로 나누어 한 칸의 높이를 구한다.
+    for screenIdx = 1:6 % 화면을 총 6번 제시한다.
 
-    for screenIdx = 1:6 % 화면 전환 횟수 (현재 6개 화면을 제시한다.)
-        xy_mat = zeros(2, numLines * 2); % 선분을 담을 행렬 선언.
-        color_mat = zeros(3, numLines * 2); % 색 랜덤을 담기 위한 행렬 선언.
-
-        %% 20개의 칸을 중복 없이 랜덤한 순서로 선택한다.
-        cellOrder = randperm(numLines); % 1부터 20까지의 숫자를 중복 없이 랜덤하게 섞는다.
+        xy_mat = zeros(2, numLines * 2); % 선분의 양 끝점 좌표를 저장할 행렬을 만든다.
+        color_mat = zeros(3, numLines * 2); % 선분의 RGB 색상 정보를 저장할 행렬을 만든다.
 
         for i = 1:numLines
-            angle = rand * 360;
-            lineLen = 50 + rand * 100; % 50부터 150 미만 랜덤한 길이를 가진다.
-            RandColor = rand(1, 3) * 255; % 색 랜덤 설정.
 
-            %% 선분을 배치할 칸의 행과 열을 계산한다.
-            row = floor((cellOrder(i)-1) / numCols);
-            col = mod(cellOrder(i)-1, numCols);
-            % cellOrder(i)는 랜덤하게 선택된 칸 번호이다.
-            % 1부터 20까지의 칸 번호를 행과 열의 위치로 바꿔준다.
-            % row는 세로 방향의 칸 위치, col은 가로 방향의 칸 위치를 나타낸다.
-            % 여기서 row와 col은 화면 위치를 계산하기 위한 번호이며, MATLAB 배열의 인덱스를 의미하는 것은 아니다.
+            %% 선분의 중심 위치를 랜덤하게 정한다.
+            cx = xPositions(randi(length(xPositions)));
+            cy = yPositions(randi(length(yPositions)));
+            % xPositions와 yPositions에는 미리 만든 좌표 후보들이 저장되어 있다.
+            % length는 좌표 후보가 몇 개 있는지 알려준다.
+            % randi는 좌표 후보 중 몇 번째 값을 사용할지 무작위로 선택한다.
+            % 따라서 cx는 선분의 가로 중심 좌표, cy는 선분의 세로 중심 좌표가 된다.
+            % linspace로 좌표 후보를 만들고 randi로 하나를 선택하여 위치를 정한다.
 
-            %% 각 칸 안에서 선분의 중심 위치를 랜덤하게 정한다.
-            cx = (col + rand) * cellW;
-            cy = (row + rand) * cellH;
-            % col과 row를 이용하여 선분이 들어갈 칸을 정한다.
-            % rand는 0 이상 1 미만의 랜덤한 숫자를 만든다.
-            % 따라서 선분의 중심이 칸의 정중앙에만 고정되지 않고, 칸 안에서 랜덤하게 바뀐다.
-            % cellW는 한 칸의 너비, cellH는 한 칸의 높이를 의미한다.
+            %% 선분의 길이, 방위, 색상을 랜덤하게 설정한다.
+            angle = rand * 360; % 0도부터 360도 사이의 랜덤한 방위를 정한다.
+            lineLen = 50 + rand * 100; % 50부터 150 미만의 랜덤한 길이를 정한다.
+            RandColor = rand(1, 3) * 255; % RGB 색상을 랜덤하게 설정한다.
 
             idx = (i-1)*2 + 1;
+            % 선분 하나는 양 끝점 2개로 이루어진다.
+            % 따라서 선분마다 좌표 행렬의 열 2개를 사용한다.
+            % idx는 해당 선분의 첫 번째 끝점이 저장될 열 번호이다.
 
-            %% 각각 선분 길이 좌표 구하는 코드
+            %% 방식 1. 기존 좌표 계산 방식
+            % 선분의 중심에서 방위와 길이를 이용하여 양 끝점의 좌표를 구한다.
             % xy_mat(1, idx) = cx - (lineLen/2) * sind(angle);
             % xy_mat(2, idx) = cy - (lineLen/2) * cosd(angle);
             % xy_mat(1, idx+1) = cx + (lineLen/2) * sind(angle);
             % xy_mat(2, idx+1) = cy + (lineLen/2) * cosd(angle);
 
-            %% 다른 방식 1
-            % 선분의 반 길이를 x, y 방향으로 변환
+            %% 방식 2. 극좌표를 직교좌표로 변환
+            % 극좌표 형태의 각도와 거리를 x, y 방향의 이동량으로 바꾼다.
             % [dx, dy] = pol2cart(deg2rad(90-angle), lineLen/2);
-            % 극좌표를 x,y 형태 좌표로 바꾼다(직교좌표라고 함).
-            % 레이더같이, x축으로 얼마만큼 이동, y축으로 얼마만큼 이동 이런 걸 극좌표라 하는데
-            % 그것을 선분을 그리기 위해 직교좌표 형태로 바꾸어 준다.
-            % 움직일 거리는 선분의 반 길이이므로 lineLen/2를 사용한다.
-            % degree(각도)를 radian으로 바꾸어 주는데,
-            % 그 바꾸는 값이 90-angle이다. 이것의 이유는 아래와 같다.
-                % pol2cart(theta, r), 이 함수에서 theta는 각도(단위가 라디안), r은 원점에서 떨어진 거리,
-                % 그리고 내뱉는 값이 [x, y]로 변환된 가로, 세로 좌표이다.
-                % 내가 사용한 angle은 rand * 360으로 정의했다. 이것을 라디안 단위로 변환해야 한다.
-                % 그리고 왜 90-angle을 했냐면, 내가 원래 설계한 코드는 0도를 세로로 생각했지만
-                % pol2cart는 가로 직선에서 0도로 출발하여 계산하기 위해 사용했다.
+            % pol2cart는 각도와 거리를 x, y 좌표로 변환하는 함수이다.
+            % deg2rad는 각도를 도 단위에서 라디안 단위로 바꾸는 함수이다.
+            % 90-angle을 사용하는 이유는 기존 코드의 각도 기준과 pol2cart의 각도 기준을 맞추기 위해서이다.
+            % lineLen/2를 사용하는 이유는 선분의 중심에서 한쪽 끝점까지의 거리를 구하기 위해서이다.
 
             % 선분의 양 끝점 좌표 계산
             % xy_mat(:, idx)   = [cx-dx; cy-dy];
             % xy_mat(:, idx+1) = [cx+dx; cy+dy];
 
-            %% 또 다른 방법
-            % 선분의 반 길이를 x, y 방향으로 계산
+            %% 방식 3. x, y 방향 이동량으로 양 끝점 계산
             dx = (lineLen/2) * sind(angle);
             dy = (lineLen/2) * cosd(angle);
+            % dx는 선분 중심에서 끝점까지의 x 방향 이동량이다.
+            % dy는 선분 중심에서 끝점까지의 y 방향 이동량이다.
+            % 선분의 전체 길이가 아니라 절반의 길이를 사용한다.
+            % sind와 cosd는 각도를 도 단위로 입력받아 삼각함수 값을 계산한다.
 
             % 선분의 양 끝점 좌표 계산
-            % cx: 선분의 x좌표, cy: 선분의 y좌표
-            % dx: 중심에서 끝점까지 x방향 이동량, dy: 중심에서 끝점까지 y방향 이동량
-            % xy_mat : 선분 좌표를 저장하는 행렬
-            % (:, idx) : idx번째 열의 모든 행
-            % [cx-dx; cy-dy] : x좌표와 y좌표를 세로로 묶은 값. x좌표 아래에, 즉 다음 행에 y값을 넣는다.
-                % 이렇게 되면 2개 열씩 자리를 차지하며 DrawLines를 할 준비를 할 수 있다.
             xy_mat(:, idx)   = [cx-dx; cy-dy];
             xy_mat(:, idx+1) = [cx+dx; cy+dy];
+            % xy_mat은 선분의 좌표를 저장하는 행렬이다.
+            % (:, idx)는 idx번째 열의 모든 행을 의미한다.
+            % [cx-dx; cy-dy]는 첫 번째 끝점의 x, y 좌표를 세로로 묶은 것이다.
+            % [cx+dx; cy+dy]는 두 번째 끝점의 x, y 좌표를 세로로 묶은 것이다.
+            % 중심 좌표에서 한쪽으로 이동한 위치와 반대쪽으로 이동한 위치를 각각 구한다.
+            % 이렇게 선분마다 2개의 열에 좌표를 저장하여 DrawLines 함수에 전달한다.
 
+            %% 선분의 색상 지정
             color_mat(:, idx) = RandColor';
             color_mat(:, idx+1) = RandColor';
+            % RandColor에는 RGB 색상값 3개가 가로 방향으로 저장되어 있다.
+            % 전치 연산자 '를 사용하여 세로 방향으로 바꾼다.
+            % 선분의 양 끝점에 같은 색상을 지정하여 선분 전체가 동일한 색으로 보이게 한다.
+
         end
 
+        %% 선분을 화면에 그린다.
         Screen('FillRect', window, gray);
+        % 기존 화면을 회색으로 채워 이전 화면의 자극이 남지 않도록 한다.
 
         Screen('DrawLines', window, xy_mat, 2, color_mat, [0 0], 0);
-        Screen('Flip', window);
+        % xy_mat에 저장된 좌표를 이용하여 선분을 그린다.
+        % 2는 선분의 두께를 의미한다.
+        % color_mat은 각 선분의 색상을 지정한다.
+        % [0 0]은 별도의 중심 오프셋을 적용하지 않는다는 뜻이다.
+        % 마지막 0은 선분을 연결하여 닫힌 도형으로 그리지 않도록 하는 설정이다.
 
-        %% 2. 전환 횟수만큼의 사진 파일을 만드세요. 각각의 화면을 사진 파일로 저장하시면 됩니다.
-        % ex) 첫 화면: pic1 / 두 번째 화면: pic2
+        Screen('Flip', window);
+        % 준비한 자극을 실제 화면에 표시한다.
+
+        %% Task 2. 화면 이미지 저장
         Screenshot = Screen('GetImage', window);
+        % 현재 화면에 표시된 이미지를 가져온다.
+
         fileName = sprintf('pic%d.png', screenIdx);
+        % 화면 번호에 맞춰 파일 이름을 만든다.
+        % 첫 번째 화면은 pic1.png, 두 번째 화면은 pic2.png로 저장한다.
+
         imwrite(Screenshot, fileName);
+        % 가져온 화면 이미지를 PNG 파일로 저장한다.
 
         KbStrokeWait;
+        % 키보드 입력을 기다린다.
+        % 키를 누르면 다음 화면으로 넘어간다.
 
     end
 
     sca;
     ShowCursor;
     disp('Experiment successfully finished');
-
-    %% [사진 저장 위치: 현재 폴더 or 사진 전용 폴더]
 
 catch info
     sca;

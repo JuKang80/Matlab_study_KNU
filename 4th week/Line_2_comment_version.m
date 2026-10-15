@@ -8,7 +8,7 @@ PsychDefaultSetup(1);
 
 try
     screens = Screen('Screens');
-    screenNumber = max(screens);
+    screenNumber = min(screens);
     white = WhiteIndex(screenNumber);
     black = BlackIndex(screenNumber);
     gray = white / 2;
@@ -33,16 +33,48 @@ try
             cx = rand * windowRect(3); cy = rand * windowRect(4); % x, y좌표에 대한 랜덤 값 
             idx = (i-1)*2 + 1;
 
-            % 각각 선분 길이 좌표 구하는 코드 
-            xy_mat(1, idx) = cx - (lineLen/2) * sind(angle); 
-            xy_mat(2, idx) = cy - (lineLen/2) * cosd(angle);
-            xy_mat(1, idx+1) = cx + (lineLen/2) * sind(angle);
-            xy_mat(2, idx+1) = cy + (lineLen/2) * cosd(angle);
+            %% 각각 선분 길이 좌표 구하는 코드 
+            % xy_mat(1, idx) = cx - (lineLen/2) * sind(angle); 
+            % xy_mat(2, idx) = cy - (lineLen/2) * cosd(angle);
+            % xy_mat(1, idx+1) = cx + (lineLen/2) * sind(angle);
+            % xy_mat(2, idx+1) = cy + (lineLen/2) * cosd(angle);
+
+
+            %% 다른 방식 1
+            % 선분의 반 길이를 x, y 방향으로 변환
+            [dx, dy] = pol2cart(deg2rad(90-angle), lineLen/2);
+            % 극좌표를 x,y형태 좌표로 바꾼다(직교좌표라고함) 
+            % 레이더같이,x축으로 얼마만큼 이동, y축으로 얼마만큼 이동 이런걸 극좌표라 하는데
+            % 그것을 선분을 그리기 위해 직교좌표 형태로 바꾸어 준다. 
+            % 움직일 거리는 50, 그래서 degree(각도)를 radian으로 바꾸어주는데, 
+            % 그 바꾸는 값이 90 - angle이다. 이것의 이유는 아래와 같다. 
+                % pol2cart(theta, r), 이 함수에서 theta는 각도(단위가 라디안), r은 원점에서 떨어진 거리, 그리고 내뱉는 값이 [x, y]로 변환된 가로,세로 좌표이다. 
+                % 내가 사용한 angle은 rand * 360으로 정의했다. 이것을 라디안 단위로 변환해야 한다. 
+                % 그리고 왜 90-angle을 했냐면, 내가 원래 설계한 코드는 0도를 세로로 생각했지만 pol2cart는 가로 직선에서 0도로 출발하여 계산하기 위해 사용했다. 
+
+            % 선분의 양 끝점 좌표 계산
+            xy_mat(:, idx)   = [cx-dx; cy-dy]; 
+            xy_mat(:, idx+1) = [cx+dx; cy+dy];
+
+            %% 또 다른 방법
+            % 선분의 반 길이를 x, y 방향으로 계산
+            dx = (lineLen/2) * sind(angle);
+            dy = (lineLen/2) * cosd(angle);
+
+            % 선분의 양 끝점 좌표 계산
+            % cx: 선분의 x좌표, cy: 선분의 y좌표
+            % dx: 중심에서 끝점까지 x방향 이동량, dy: 중심에서 끝점까지 y방향 이동량
+            % xy_mat : 선분 좌표를 저장하는 행렬 
+            % (:, idx) : idx번째 열의  모든 행 
+            % [cx-dx; cy-dy] : x좌표와 y좌표를 세로로 묶은 값. x좌표 아래에, 즉 다음 행에 y값을 넣는다.
+                % 이렇게 되면 2개 열씩 자리를 차지하며 DrawLines를 할 준비를 할 수 있다.
+            xy_mat(:, idx)   = [cx-dx; cy-dy];
+            xy_mat(:, idx+1) = [cx+dx; cy+dy];
 
             color_mat(:, idx) = RandColor';
             color_mat(:, idx+1) = RandColor';
         end 
-    
+
         Screen('FillRect', window, gray);
 
         Screen('DrawLines', window, xy_mat, 2, color_mat, [0 0], 0); 

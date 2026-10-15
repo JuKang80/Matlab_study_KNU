@@ -40,7 +40,7 @@ try
 
             % 선분의 길이, 방위, 색상 랜덤 설정
             angle = rand * 360;
-            lineLen = 50 + rand * 100;
+            lineLen = 50 + rand * 50;
             RandColor = rand(1, 3) * 255;
 
             idx = (i-1)*2 + 1;

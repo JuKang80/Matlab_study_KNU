@@ -1,4 +1,3 @@
-
 clear;
 clc;
 close all;
@@ -18,32 +17,26 @@ try
     Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     Screen('Flip', window);
 
-    %% 그리드 설정
-    numCols = 5;
-    numRows = 4;
-    numLines = 20;
-
-    cellW = windowRect(3) / numCols;
-    cellH = windowRect(4) / numRows;
+    %% 선분의 위치를 지정하기 위한 좌표 생성
+    xPositions = linspace(100, windowRect(3)-100, 10);
+    yPositions = linspace(100, windowRect(4)-100, 10);
+    % linspace를 사용하여 화면의 가로, 세로 방향에 일정한 간격의 좌표를 만든다.
+    % 화면 가장자리에서 100픽셀 안쪽부터 좌표를 생성한다.
 
     %% Task 1. 랜덤 선분 20개 그리기
+    numLines = 20;
+
     for screenIdx = 1:6
 
         xy_mat = zeros(2, numLines * 2);
         color_mat = zeros(3, numLines * 2);
 
-        % 셀 번호 무작위 선택
-        cellOrder = randperm(20);
-
         for i = 1:numLines
 
-            % 셀 번호를 행과 열로 변환
-            row = floor((cellOrder(i)-1) / numCols);
-            col = mod(cellOrder(i)-1, numCols);
-
-            % 셀 중앙에 선분 배치
-            cx = (col + rand) * cellW;
-            cy = (row + rand) * cellH;
+            % 미리 생성한 좌표 중 하나를 무작위로 선택한다.
+            cx = xPositions(randi(length(xPositions)));
+            cy = yPositions(randi(length(yPositions)));
+            % randi를 사용하여 좌표 목록에서 무작위 위치를 선택한다.
 
             % 선분의 길이, 방위, 색상 랜덤 설정
             angle = rand * 360;

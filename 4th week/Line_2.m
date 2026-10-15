@@ -33,7 +33,6 @@ try
 
         for i = 1:numLines
 
-            % 미리 생성한 좌표 중 하나를 무작위로 선택한다.
             cx = xPositions(randi(length(xPositions)));
             cy = yPositions(randi(length(yPositions)));
             % randi를 사용하여 좌표 목록에서 무작위 위치를 선택한다.

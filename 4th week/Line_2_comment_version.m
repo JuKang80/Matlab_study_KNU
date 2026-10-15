@@ -8,7 +8,7 @@ PsychDefaultSetup(1);
 
 try
     screens = Screen('Screens');
-    screenNumber = min(screens);
+    screenNumber = max(screens);
     white = WhiteIndex(screenNumber);
     black = BlackIndex(screenNumber);
     gray = white / 2;
@@ -18,13 +18,18 @@ try
     Screen('Flip', window);
 
     %% 선분의 위치를 지정하기 위한 좌표 생성
-    xPositions = linspace(100, windowRect(3)-100, 10);
-    yPositions = linspace(100, windowRect(4)-100, 10);
-    % linspace는 지정한 범위 안에서 일정한 간격의 숫자를 만들어 주는 함수이다.
-    % 화면의 가로, 세로 방향으로 각각 10개의 좌표 후보를 만든다.
-    % 화면의 가장자리에서 100픽셀 정도 안쪽부터 좌표를 생성한다.
-    % 이렇게 하면 화면 전체에서 아무 좌표나 뽑는 대신, 미리 만든 좌표 중에서 위치를 선택할 수 있다.
+    screenwidth = windowRect(3) - windowRect(1);
+    screenHeight = windowRect(4) - windowRect(2);
+    
+    marginX = screenwidth * 0.05;
+    marginY = screenHeight * 0.05;
+    % 화면 가로와 세로 크기의 5%를 여백으로 설정한다. 
 
+    xPositions = linspace(marginX, screenwidth - marginX, 20);
+    yPositions = linspace(marginY, screenHeight - marginY, 20);
+    % linspace는 지정한 범위 안에서 일정한 간격의 숫자를 만들어 주는 함수이다.
+    % 화면 가장자리에서 각각 5% 안쪽에 10개의 좌표 후보를 생성한다. 
+    
     %% Task 1. 랜덤 선분 20개 그리기
     numLines = 20; % 제시할 선분의 개수를 20개로 설정한다.
 

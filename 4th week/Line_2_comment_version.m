@@ -1,4 +1,3 @@
-```matlab
 clear;
 clc;
 close all;
@@ -128,4 +127,3 @@ catch info
     ShowCursor;
     rethrow(info);
 end
-```

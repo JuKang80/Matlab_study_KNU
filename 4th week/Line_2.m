@@ -42,8 +42,8 @@ try
             col = mod(cellOrder(i)-1, numCols);
 
             % 셀 중앙에 선분 배치
-            cx = (col + 0.5) * cellW;
-            cy = (row + 0.5) * cellH;
+            cx = (col + rand) * cellW;
+            cy = (row + rand) * cellH;
 
             % 선분의 길이, 방위, 색상 랜덤 설정
             angle = rand * 360;

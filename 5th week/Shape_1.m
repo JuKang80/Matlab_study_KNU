@@ -48,9 +48,6 @@ try
             Screen('Flip', window);
 
             WaitSecs(1);
-
-       
-
         
         end
     end

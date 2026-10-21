@@ -20,7 +20,7 @@ PsychDefaultSetup(1);
 
 try
     screens = Screen('Screens');
-    screenNumber = min(screens);
+    screenNumber = max(screens);
     white = WhiteIndex(screenNumber);
     black = BlackIndex(screenNumber);
     gray = white / 2;

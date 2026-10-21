@@ -7,3 +7,60 @@
 % 문에서 숫자 카운트다운(타이머가 돌아가도록)을 넣으면 될 것 같다. 
 % 3) 도형의 모양은 크게 설정된것이 없다. 원으로 시도해보자. 
 
+
+% 기본설정 1
+clear;
+clc;
+close all;
+sca;
+
+% 기본설정 2
+Screen('Preference', 'SkipSyncTests', 1);
+PsychDefaultSetup(1);
+
+try
+    screens = Screen('Screens');
+    screenNumber = min(screens);
+    white = WhiteIndex(screenNumber);
+    black = BlackIndex(screenNumber);
+    gray = white / 2;
+    % 색 지정 및 바탕화면 색 지정
+
+    [window, windowRect] = Screen('OpenWindow', screenNumber, gray);
+    Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+    Screen('Flip', window);
+
+    for trial = 1:5
+    
+        cx = double(randi([100, windowRect(3)-100], 1, 10)); % 도형 중심 x좌표 한번에 만들기
+        cy = double(randi([100, windowRect(4)-100], 1, 10)); % 도형 중심 y좌표 한번에 만들기
+        sz = double(randi([50, 150], 1, 10)); % 10개 도형 크기 한번에 만들기
+       
+        shapes = [cx-sz/2; cy-sz/2; cx + sz/2; cy + sz/2]; % 도형이 나타날 위치 저장을 위한 4행 10열 설정
+        colors = randi([0 255], 3, 10); % 색상은 루프 필요 없이 랜덤 색 미리 생성
+
+        for timer = 5:-1:1
+            Screen('FillOval', window, colors, shapes)
+
+            infoText = ['Trial:  ', num2str(trial), '\nTime Left: ', num2str(timer), 's'];
+            DrawFormattedText(window, infoText, 50, 50, white);
+
+            Screen('Flip', window);
+
+            WaitSecs(1);
+
+       
+
+        
+        end
+    end
+
+    sca;
+    ShowCursor;
+    disp('Experiment successfully finished');
+
+catch info
+    sca;
+    ShowCursor;
+    rethrow(info);
+end

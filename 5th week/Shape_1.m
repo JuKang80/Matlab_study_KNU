@@ -30,7 +30,7 @@ try
     Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     Screen('Flip', window);
 
-    for trial = 1:5 % 디버깅 위해서는 5로 바꾸어 확인
+    for trial = 1:5 % 디버깅 시 5로 바꾸어 확인
     
         cx = double(randi([100, windowRect(3)-100], 1, 10)); % 도형 중심 x좌표 한번에 만들기
         cy = double(randi([100, windowRect(4)-100], 1, 10)); % 도형 중심 y좌표 한번에 만들기

@@ -29,21 +29,31 @@ try
 
     for trial = 1:20 
 
-        chosenRoomIndices = randperm(16, 10); 
-        cx_grid = allRooms(chosenRoomIndices, 1)'; 
-        cy_grid = allRooms(chosenRoomIndices, 2)';
+        centers = allRooms(randperm(16, 10), :); % 행은 비복원 추출로 산정된 값만 가져오고, 열은 전부다 가져와라(X, Y값 가져온다는 이야기)
 
-        jitterX = double(randi([-25, 25], 1, 10));
-        jitterY = double(randi([-25, 25], 1, 10));
+        sz = double(randi([50, 100], 10, 1)); % 10행 1열 구조
 
-        cx = cx_grid + jitterX;
-        cy = cy_grid + jitterY;
+        shapes = [centers(:,1)-sz/2, centers(:,2)-sz/2, centers(:,1)+sz/2, centers(:,2)+sz/2]'; 
+        % Left, Top, Right, Bottom
+        % centers의 1열에 적힌 숫자들은 X좌표, 2열에 적힌 숫자들은 Y좌표
+        % 이렇게 각 left, top, right, bottom을 구하여 shapes에 값을 집어 넣고
+        % transpose한다. 즉, 10행 4열 구조를 4행 10열로 바꾼다.
 
-        sz = double(randi([50, 100], 1, 10)); % 격자 방 크기를 넘지 않게 최대 크기 살짝 조절
+        colors = randi([0, 255], 3, 10);
 
-        shapes = [cx-sz/2; cy-sz/2; cx + sz/2; cy + sz/2]; 
+        % chosenRoom = randperm(16, 10); 
+        % cx_grid = allRooms(chosenRoom, 1)'; 
+        % cy_grid = allRooms(chosenRoom, 2)';
 
-        colors = randi([180 255], 3, 10); 
+        % jitterX = double(randi([-25, 25], 1, 10));
+        % jitterY = double(randi([-25, 25], 1, 10));
+
+        % cx = cx_grid + jitterX;
+        % cy = cy_grid + jitterY;
+
+        % sz = double(randi([50, 100], 1, 10)); % 격자 방 크기를 넘지 않게 최대 크기 살짝 조절
+
+        % shapes = [cx-sz/2; cy-sz/2; cx + sz/2; cy + sz/2]; 
 
         for timer = 5:-1:1
             Screen('FillOval', window, colors, shapes)

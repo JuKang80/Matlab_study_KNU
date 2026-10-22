@@ -27,6 +27,9 @@ try
     [X, Y] = meshgrid(gridX, gridY);
     allRooms = [X(:), Y(:)];
 
+    KbQueueCreate;
+    KbQueueStart;
+
     for trial = 1:20 
 
         centers = allRooms(randperm(16, 10), :); % 행은 비복원 추출로 산정된 값만 가져오고, 열은 전부다 가져와라(X, Y값 가져온다는 이야기)
@@ -63,9 +66,15 @@ try
 
             Screen('Flip', window);
             WaitSecs(1);
+
+            [pressed, firstPress] = KbQueueCheck; 
+            if pressed && firstPress(KbName('ESCAPE'))
+                    error('사용자가 ESC를 눌러 종료했습니다.')
+            end
         end
     end
 
+    KbQueueRelease;
     sca;
     ShowCursor;
     disp('Experiment successfully finished');

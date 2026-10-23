@@ -45,22 +45,24 @@ try
     singleColor = randi([0 255], 3, 1);
 
     for timer = 1:20 % 1초씩 올라가는 것이다. 원하는 만큼 올리면 된다. 
+
         for i = 1:10 % 그림을 미리 그려놓는 것이 좋을 것 같아 10번 루프를 돈다. 
             n = ShapeTypes(i); % i번째 그릴 그림의 종류(꼭짓점 개수)를 가져온다. 
-            if n == 0 % 꼭짓점 개수가 없다면 꼭짓점 개수를 360개로 하여 원처럼 보이게 한다. 
-                n = 360;
-            end
-            r = sz(i) / 2; % 반지름을 구하기 위해 도형 크기를 반으로 나눈다. 
             cx = chosenRooms(i, 1); % 랜덤한 방 중 i번째 방의 X 중심 좌표 가져온다. 
             cy = chosenRooms(i, 2); % 랜덤한 방 중 i번째 방의 Y 중심 좌표 가져온다. 
-            theta = linspace(0, 2*pi, n+1)'; % 숫자를 일정한 간격으로 나누어준다. 0부터 시작하여 어디까지? 360도까지, 그리고 언제까지? n+1, 즉 꼭짓점 개수까지 나누어준다. 삼각형은 꼭짓점이 세개, 사각형은 4개, ... 그래서 각 도형에 맞는 꼭짓점 개수만큼 나누어준다. 
-            % 그리고 세로줄로 변형해준다. 
-            
-            every_points = [cx + r*cos(theta), cy + r*sin(theta)];
-            % 각도를 x,y좌표로 변형하기 위해 cos, sin을 이용한다. 
 
-
-            Screen('FillPoly', window, singleColor, every_points);
+            if n == 0 % 꼭짓점 개수가 없다면 꼭짓점 개수를 360개로 하여 원처럼 보이게 한다. 
+                rect = [cx - sz(i)/2, cy - sz(i)/2, cx + sz(i)/2, cy + sz(i)/2];
+                Screen('FillOval', window, singleColor, rect);
+                
+            else
+                r = sz(i) / 2; % 반지름을 구하기 위해 도형 크기를 반으로 나눈다. 
+                theta = linspace(0, 2*pi, n+1)'; % 숫자를 일정한 간격으로 나누어준다. 0부터 시작하여 어디까지? 360도까지, 그리고 언제까지? n+1, 즉 꼭짓점 개수까지 나누어준다. 삼각형은 꼭짓점이 세개, 사각형은 4개, ... 그래서 각 도형에 맞는 꼭짓점 개수만큼 나누어준다. 
+                % 그리고 세로줄로 변형해준다. 
+                every_points = [cx + r*cos(theta), cy + r*sin(theta)];
+                % 각도를 x,y좌표로 변형하기 위해 cos, sin을 이용한다. 
+                Screen('FillPoly', window, singleColor, every_points);        
+            end 
         end
 
         infoText = sprintf('Time Passed: %ds / 20s', timer);

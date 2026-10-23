@@ -44,6 +44,9 @@ try
     sz = double(randi([50, 100], 10, 1));
     singleColor = randi([0 255], 3, 1);
 
+    KbQueueCreate;
+    KbQueueStart;
+
     for timer = 1:20 % 1초씩 올라가는 것이다. 원하는 만큼 올리면 된다. 
 
         for i = 1:10 % 그림을 미리 그려놓는 것이 좋을 것 같아 10번 루프를 돈다. 
@@ -65,7 +68,7 @@ try
             end 
         end
 
-        infoText = sprintf('Time Passed: %ds / 20s', timer);
+        infoText = sprintf('Time Passed: %ds / 20s\n\n [Press ESC to Quit]', timer);
         DrawFormattedText(window, infoText, 50, 50, white);
 
         Screen('Flip', window);
@@ -77,14 +80,20 @@ try
             imwrite(imageArray, filename);
         end
         WaitSecs(1);
+
+        [pressed, firstPress] = KbQueueCheck;
+        if pressed && firstPress(KbName('ESCAPE'))
+            error('사용자가 ESC를 눌러 종료했습니다.') % error로 만들어 catch로 빠져나가게 한다. 
+        end
     end   
-
-
+    
+    KbQueueRelease;
     sca;
     ShowCursor;
     disp('Experiment successfully finished');
 
 catch info
+    KbQueueRelease;
     sca;
     ShowCursor;
     rethrow(info);

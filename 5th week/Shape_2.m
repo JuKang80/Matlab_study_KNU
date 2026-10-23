@@ -31,7 +31,6 @@ try
     Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     Screen('Flip', window);
 
-
     gridX = linspace(windowRect(3) * 0.1, windowRect(3) * 0.9, 4);
     gridY = linspace(windowRect(4) * 0.2, windowRect(4) * 0.8, 4);
     [X, Y] = meshgrid(gridX, gridY);
@@ -39,10 +38,13 @@ try
 
     ShapeTypes =[0, 0, 4, 4, 3, 3, 5, 5, 6, 6];
 
-
     chosenRooms = allRooms(randperm(16, 10), :);
     sz = double(randi([50, 100], 10, 1));
     singleColor = randi([0 255], 3, 1);
+
+    % jitter 추가 
+    jitterX = double(randi([-120, 120], 10, 1));
+    jitterY = double(randi([-80, 80], 10, 1));
 
     KbQueueCreate;
     KbQueueStart;
@@ -51,8 +53,8 @@ try
 
         for i = 1:10 % 그림을 미리 그려놓는 것이 좋을 것 같아 10번 루프를 돈다. 
             n = ShapeTypes(i); % i번째 그릴 그림의 종류(꼭짓점 개수)를 가져온다. 
-            cx = chosenRooms(i, 1); % 랜덤한 방 중 i번째 방의 X 중심 좌표 가져온다. 
-            cy = chosenRooms(i, 2); % 랜덤한 방 중 i번째 방의 Y 중심 좌표 가져온다. 
+            cx = chosenRooms(i, 1) + jitterX(i); % 랜덤한 방 중 i번째 방의 X 중심 좌표 가져온다. 그리고 jitter를 더한다. 
+            cy = chosenRooms(i, 2) + jitterY(i); % 랜덤한 방 중 i번째 방의 Y 중심 좌표 가져온다. 그리고 jitter를 더한다. 
 
             if n == 0 % 꼭짓점 개수가 없다면 꼭짓점 개수를 360개로 하여 원처럼 보이게 한다. 
                 rect = [cx - sz(i)/2, cy - sz(i)/2, cx + sz(i)/2, cy + sz(i)/2];

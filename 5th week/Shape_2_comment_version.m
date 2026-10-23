@@ -23,14 +23,14 @@ try
     % 디스플레이 모니터의 정보를 수집하고 색상 값을 지정합니다.
     screens = Screen('Screens'); % 현재 PC에 연결된 모니터 번호들을 배열로 가져옵니다.
     screenNumber = max(screens); % 듀얼 모니터면 보조 화면을, 싱글이면 기본 화면(0)을 자동으로 픽합니다.
-    white = WhiteIndex(screenNumber); % 해당 모니터에서 가장 밝은 흰색 코드값(255)을 가져옵니다.
-    black = BlackIndex(screenNumber); % 해당 모니터에서 가장 어두운 검은색 코드값(0)을 가져옵니다.
+    white = WhiteIndex(screenNumber); % 해당 모니터에서 사용할 수 있는 가장 밝은 흰색 코드값(255)을 가져옵니다.
+    black = BlackIndex(screenNumber); % 해당 모니터에서 사용할 수 있는 가장 어두운 검은색 코드값(0)을 가져옵니다.
     gray = white / 2; % 흰색의 딱 절반 값으로 배경에 깔아줄 회색 데이터를 계산합니다.
     % 색 지정 및 바탕화면 색 지정
 
     % 실제 화면 창을 열고 알파 블렌딩 설정을 켭니다.
     [window, windowRect] = Screen('OpenWindow', screenNumber, gray); % 회색 배경의 전체화면 창을 생성하고 창 ID와 해상도 크기를 반환받습니다.
-    Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA'); % 투명도 효과와 부드러운 안티앨리어싱 선 처리가 작동하도록 그래픽 설정을 결합합니다.
+    Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA'); % 투명도 효과와 부드러운 선 처리가 작동하도록 그래픽 설정을 결합합니다.
     Screen('Flip', window); % 가상 버퍼의 빈 회색 화면을 모니터에 실제로 뒤집어 첫 화면을 표출합니다.
 
     % 도형들이 서로 절대 겹치지 않게 배치하기 위한 4x4 격자(총 16개 방) 중심점 좌표를 연산합니다.
@@ -40,12 +40,16 @@ try
     allRooms = [X(:), Y(:)]; % 4x4 구조로 묶여있던 격자 행렬 좌표를 풀어서 16행 2열(1열: X, 2열: Y)의 배치 후보지 리스트로 만듭니다.
 
     % 문제 조건에 맞춘 도형 종류 정의 (0은 원, 3은 삼, 4는 사, 5는 오, 6은 육각형의 꼭짓점 수)
-    ShapeTypes =[0, 0, 4, 4, 3, 3, 5, 5, 6, 6];
+    ShapeTypes =;
 
     % 10개 도형들의 무작위 위치 선택, 지름 크기, 무작위 고정 컬러 세팅을 진행합니다.
     chosenRooms = allRooms(randperm(16, 10), :); % 16개 방 번호 중 무작위 순열로 10개를 비복원 추출하여 각 도형이 들어갈 중심 X, Y 좌표 행렬을 선점합니다.
     sz = double(randi([50, 100], 10, 1)); % 50 픽셀에서 100 픽셀 사이의 무작위 지름 크기를 10행 1열 구조의 실수형태 데이터로 뽑아냅니다.
     singleColor = randi([0 255], 3, 1); % 모든 도형에 일괄 적용할 단 하나의 무작위 고정 RGB 색상 [R; G; B] 코드를 3행 1열로 추출합니다.
+
+    % jitter 추가 
+    jitterX = double(randi([-120, 120], 10, 1)); % 각 도형의 격자 정중앙에서 가로축으로 최대 -120픽셀에서 +120픽셀까지 임의로 어긋나게 만드는 흔듦 데이터를 10행 1열로 뽑습니다.
+    jitterY = double(randi([-80, 80], 10, 1)); % 각 도형의 격자 정중앙에서 세로축으로 최대 -80픽셀에서 +80픽셀까지 임의로 어긋나게 만드는 흔듦 데이터를 10행 1열로 뽑습니다.
 
     % [디버깅 장치 설정] 백그라운드 키보드 모니터링 큐를 생성하고 켭니다.
     KbQueueCreate; % 비동기 방식으로 키보드 신호를 수집할 독립 메모리 큐 공간을 준비합니다.
@@ -57,41 +61,41 @@ try
         % 가상 화면 버퍼에 10개의 도형을 번호 순서대로 누적하여 그려내는 내부 루프입니다.
         for i = 1:10 % 그림을 미리 그려놓는 것이 좋을 것 같아 10번 루프를 돈다. 
             n = ShapeTypes(i); % i번째 그릴 그림의 종류(꼭짓점 개수)를 가져온다. 
-            cx = chosenRooms(i, 1); % 랜덤한 방 중 i번째 방의 X 중심 좌표 가져온다. 
-            cy = chosenRooms(i, 2); % 랜덤한 방 중 i번째 방의 Y 중심 좌표 가져온다. 
+            cx = chosenRooms(i, 1) + jitterX(i); % 랜덤한 방 중 i번째 방의 X 중심 좌표 가져온다. 그리고 jitter를 더한다. 
+            cy = chosenRooms(i, 2) + jitterY(i); % 랜덤한 방 중 i번째 방의 Y 중심 좌표 가져온다. 그리고 jitter를 더한다. 
 
             % 도형의 종류에 따른 조건문 분기입니다. 원(0)과 나머지 다각형을 나누어 처리합니다.
             if n == 0 % 꼭짓점 개수가 없다면 꼭짓점 개수를 360개로 하여 원처럼 보이게 한다. 
-                % 원을 온전하게 가둬서 그릴 외곽 경계 사각 상자 [Left, Top, Right, Bottom] 좌표를 연산합니다.
+                % 지터가 더해진 무작위 중심 좌표(cx, cy)와 고유 지름 크기(sz)를 이용해 원의 외곽 테두리 영역 [Left, Top, Right, Bottom]을 구합니다.
                 rect = [cx - sz(i)/2, cy - sz(i)/2, cx + sz(i)/2, cy + sz(i)/2];
-                % 계산된 경계 상자 사양에 맞춰 PTB 전용 내장 정원 그리기 함수를 호출하여 화면 버퍼에 그립니다.
+                % 해당 사각 경계 안에 온전하게 들어차는 깔끔한 내장 정원을 화면 버퍼에 드로잉합니다.
                 Screen('FillOval', window, singleColor, rect);
                 
             else % 꼭짓점 수가 3개 이상인 다각형 도형 계열의 처리 분기입니다.
                 r = sz(i) / 2; % 반지름을 구하기 위해 도형 크기를 반으로 나눈다. 
-                % 도형이 한쪽으로 쓰러지지 않고 위쪽 정오 방향을 정면으로 바라보도록 각도 값에서 pi/2(90도)를 빼는 보정을 가미했습니다.
+                % 다각형이 옆으로 누워서 그려지지 않고 위쪽 정오 방향을 정면으로 바라보도록 각도 행렬 전체에 -pi/2(90도) 회전 필터를 결합합니다.
                 theta = linspace(0, 2*pi, n+1)' - pi/2; % 숫자를 일정한 간격으로 나누어준다. 0부터 시작하여 어디까지? 360도까지, 그리고 언제까지? n+1, 즉 꼭짓점 개수까지 나누어준다. 삼각형은 꼭짓점이 세개, 사각형은 4개, ... 그래서 각 도형에 맞는 꼭짓점 개수만큼 나누어준다. 
                 % 그리고 세로줄로 변형해준다. 
                 every_points = [cx + r*cos(theta), cy + r*sin(theta)];
                 % 각도를 x,y좌표로 변형하기 위해 cos, sin을 이용한다. 
                 
-                % 추출된 다각형 외곽 꼭짓점 좌표 행렬들을 순서대로 이어서 채워진 다각형을 화면 버퍼에 그려냅니다.
+                % 지터가 가미된 중심 좌표를 토대로 생성된 다각형 점들의 배열들을 묶어 무작위 다각형 모양을 가상 버퍼에 채워 넣습니다.
                 Screen('FillPoly', window, singleColor, every_points);        
             end 
         end % 10개 도형 그리기 내부 루프 종료
 
         % 좌상단에 실시간 안내 메시지를 뿌려주기 위한 렌더링 세팅입니다.
         infoText = sprintf('Time Passed: %ds / 20s\n\n [Press ESC to Quit]', timer); % 현재 경과 타이머 초와 비상 탈출을 안내하는 서식 문장을 조합합니다.
-        DrawFormattedText(window, infoText, 50, 50, white); % 열려 있는 실험 창의 (50, 50) 좌표에 지정한 흰색 글씨로 텍스트 레이아웃을 잡습니다.
+        DrawFormattedText(window, infoText, 50, 50, white); % 지정된 윈도우 창의 좌측 상단(X=50, Y=50) 좌표에 흰색 글씨로 텍스트 레이아웃을 잡습니다.
 
         % 가상 화면 메모리에 먼저 완성해 둔 10개 도형들과 글자 레이어를 물리적인 모니터 정면으로 반전시켜 표출합니다.
         Screen('Flip', window);
 
         % 문제의 핵심 조건인 5초 주기 자동 스크린샷 저장 로직 영역입니다.
         if mod(timer, 5) == 0 % 현재 타이머의 숫자가 5의 배수(5로 나눈 나머지가 0)가 되는 매 5초 타이밍 타이머일 때만 진입합니다.
-            imageArray = Screen('GetImage', window); % 현재 모니터 윈도우 스크린에 활성화되어 떠 있는 화면 픽셀 전체를 그대로 캡처해 RGB 3차원 행렬로 가져옵니다.
+            imageArray = Screen('GetImage', window); % 현재 실제 모니터 화면에 표출되고 있는 윈도우 창의 그래픽 픽셀 데이터를 RGB 행렬 배열로 캡처하여 가져옵니다.
 
-            filename = sprintf('screenshot_%ds.png', timer); % 시간대별로 고유한 이름 파일명(예: screenshot_5s.png)을 문자열로 완성합니다.
+            filename = sprintf('screenshot_%ds.png', timer); % 저장될 이미지의 파일명을 'screenshot_5s.png', 'screenshot_10s.png' 등 시간별로 고유하게 생성합니다.
             imwrite(imageArray, filename); % 캡처한 이미지 픽셀 정보 행렬을 현재 매틀랩 기본 작업 경로에 PNG 포맷 이미지 파일로 기록 및 디스크 저장합니다.
         end % 스크린샷 기록 조건문 마감
         

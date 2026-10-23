@@ -46,8 +46,9 @@ try
     jitterX = double(randi([-120, 120], 10, 1));
     jitterY = double(randi([-80, 80], 10, 1));
 
-    KbQueueCreate;
-    KbQueueStart;
+
+    KbQueueCreate; % 큐 자료구조 선언, First In First Out (FIFO)
+    KbQueueStart; % 선언한 큐를 시작한다. 
 
     for timer = 1:20 % 1초씩 올라가는 것이다. 원하는 만큼 올리면 된다. 
 

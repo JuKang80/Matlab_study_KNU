@@ -62,11 +62,11 @@ try
                 
             else
                 r = sz(i) / 2; % 반지름을 구하기 위해 도형 크기를 반으로 나눈다. 
-                theta = linspace(0, 2*pi, n+1)'; % 숫자를 일정한 간격으로 나누어준다. 0부터 시작하여 어디까지? 360도까지, 그리고 언제까지? n+1, 즉 꼭짓점 개수까지 나누어준다. 삼각형은 꼭짓점이 세개, 사각형은 4개, ... 그래서 각 도형에 맞는 꼭짓점 개수만큼 나누어준다. 
+                theta = linspace(0, 2*pi, n+1)'; % 원을 일정한 간격으로 나누어준다. 0부터 시작하여 어디까지? 360도까지, 그리고 언제까지? n+1, 즉 꼭짓점 개수까지 나누어준다. 삼각형은 꼭짓점이 세개, 사각형은 4개, ... 그래서 각 도형에 맞는 꼭짓점 개수만큼 나누어준다. 
                 % 그리고 세로줄로 변형해준다. 
                 every_points = [cx + r*cos(theta), cy + r*sin(theta)];
                 % 각도를 x,y좌표로 변형하기 위해 cos, sin을 이용한다. 
-                Screen('FillPoly', window, singleColor, every_points);        
+                Screen('FillPoly', window, singleColor, every_points); % 꼭짓점을 연결하고 그 안에 색을 채워 넣는다.     
             end 
         end
 

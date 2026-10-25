@@ -57,7 +57,7 @@ try
             cx = chosenRooms(i, 1) + jitterX(i); % 랜덤한 방 중 i번째 방의 X 중심 좌표 가져온다. 그리고 jitter를 더한다. 
             cy = chosenRooms(i, 2) + jitterY(i); % 랜덤한 방 중 i번째 방의 Y 중심 좌표 가져온다. 그리고 jitter를 더한다. 
 
-            if n == 0 % 꼭짓점 개수가 없다면 꼭짓점 개수를 360개로 하여 원ㅇ처럼 보이게 한다. 
+            if n == 0  
                 rect = [cx - sz(i)/2, cy - sz(i)/2, cx + sz(i)/2, cy + sz(i)/2];
                 Screen('FillOval', window, singleColor, rect);
                 

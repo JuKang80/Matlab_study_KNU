@@ -9,13 +9,13 @@
 % 스크린샷은 새로운 파일로 5초마다 한장씩, 일단 1분까지만 설정하고 찍자. 
 
 
-% 기본설정 1
+% 기본설정1
 clear;
 clc;
 close all;
 sca;
 
-% 기본설정 2
+% 기본설정2
 Screen('Preference', 'SkipSyncTests', 1);
 PsychDefaultSetup(1);
 

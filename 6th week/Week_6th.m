@@ -48,26 +48,23 @@ try
     posX = [startX, startX] + ovalWidth / 2;
     posY = screenHeight * [0.35, 0.65];
 
-    totalDist = [0, 0];       % 누적 이동 거리
-    currDist = [0, 0];        % 현재 프레임 이동 거리
-    restLeft = [0, 0];        % 남은 휴식 시간(초)
+    totalDist = [0, 0];         % 누적 이동 거리
+    currDist = [0, 0];          % 현재 이동 거리
+    restLeft = [0, 0];          % 남은 휴식 시간(초)
     hasRested = [false, false]; % 중간 지점 휴식 완료 여부
 
     % 이동 범위 및 타이머 설정
     minStep = 10;
     maxStep = 45;
-    restDuration = 5;         % 중간 지점 휴식 시간 (5초)
-    dt = 0.25;                % 화면 전환 주기 (0.25초)
+    restDuration = 5;           % 중간 지점 휴식 시간 (5초)
+    dt = 0.25;                  % 화면 전환 주기 (0.25초)
 
     winner = 'None';
-    frame = 0;
-    startTime = GetSecs;
+    step = 0;
 
-    % 결과 저장용 파일 열기 (엑셀용 CSV 파일)
-    timestamp = datestr(now, 'yyyymmdd_HHMMSS');
-    csvFilename = sprintf('RaceResult_%s.csv', timestamp);
-    csvFileID = fopen(csvFilename, 'w');
-    fprintf(csvFileID, 'Frame,ElapsedTime,RedX,BlueX,RedCurrent,BlueCurrent,RedTotal,BlueTotal,RedRest,BlueRest\n');
+    % 결과 저장용 파일 열기 (엑셀 및 메모장 겸용 CSV 파일)
+    fileID = fopen('race_result.csv', 'w');
+    fprintf(fileID, 'Step,RedCurrent,BlueCurrent,RedTotal,BlueTotal\n');
 
     % 키보드 입력 큐 시작
     KbQueueCreate;
@@ -75,27 +72,23 @@ try
 
     % 메인 경주 루프
     while true
-        frame = frame + 1;
-        elapsedTime = GetSecs - startTime;
+        step = step + 1;
 
         % 1. 두 타원(1: Red, 2: Blue)의 휴식 및 랜덤 이동 처리
         for i = 1:2
-            % 이전 프레임 이동으로 중간 지점을 처음 통과했다면 이번 프레임부터 5초 휴식 시작
-            if posX(i) >= middleX && ~hasRested(i) && (posX(i) + ovalWidth/2 < finishX)
+            % 이전 스텝 이동으로 중간 지점을 처음 통과했다면 이번 스텝부터 5초 휴식 시작
+            if posX(i) >= middleX && ~hasRested(i)
                 restLeft(i) = restDuration;
                 hasRested(i) = true;
             end
 
-            % 휴식 시간이 남아있으면 대기, 아니면 랜덤 거리만큼 오른쪽으로 이동
+            % 휴식 시간이 남아있으면 제자리 대기, 아니면 랜덤 거리만큼 오른쪽으로 이동
             if restLeft(i) > 0
                 currDist(i) = 0;
-                restLeft(i) = max(0, restLeft(i) - dt);
-            elseif posX(i) + ovalWidth/2 < finishX
+            else
                 currDist(i) = randi([minStep, maxStep]);
                 totalDist(i) = totalDist(i) + currDist(i);
                 posX(i) = min(posX(i) + currDist(i), finishX - ovalWidth/2);
-            else
-                currDist(i) = 0;
             end
         end
 
@@ -121,8 +114,8 @@ try
         Screen('FillOval', window, ovalColors, ovalRects);
 
         % 누적 및 현재 이동 거리 표시
-        redText = sprintf('Red Total: %.0f pixel, Current: %.0f pixel', totalDist(1), currDist(1));
-        blueText = sprintf('Blue Total: %.0f pixel, Current: %.0f pixel', totalDist(2), currDist(2));
+        redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDist(1), currDist(1));
+        blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDist(2), currDist(2));
         DrawFormattedText(window, redText, 'center', posY(1) - 60, redColor);
         DrawFormattedText(window, blueText, 'center', posY(2) - 60, blueColor);
 
@@ -134,18 +127,15 @@ try
             DrawFormattedText(window, sprintf('Blue Rest: %.1f sec', restLeft(2)), 'center', posY(2) + 40, white);
         end
 
-        % 경과 시간 및 승리 결과 표시
-        DrawFormattedText(window, sprintf('Time: %.1f sec', elapsedTime), 50, 30, white);
+        % 승리 결과 표시
         if ~strcmp(winner, 'None')
             DrawFormattedText(window, winner, 'center', 'center', white);
         end
 
         Screen('Flip', window);
 
-        % 4. 현재 프레임 이동 기록을 CSV 파일에 한 줄씩 저장
-        fprintf(csvFileID, '%d,%.2f,%.0f,%.0f,%.0f,%.0f,%.0f,%.0f,%.2f,%.2f\n', ...
-            frame, elapsedTime, posX(1), posX(2), currDist(1), currDist(2), ...
-            totalDist(1), totalDist(2), restLeft(1), restLeft(2));
+        % 4. 현재 스텝의 이동 거리를 파일에 한 줄씩 저장
+        fprintf(fileID, '%d,%d,%d,%d,%d\n', step, currDist(1), currDist(2), totalDist(1), totalDist(2));
 
         % 승자가 결정되면 2초간 결과를 보여준 뒤 종료
         if ~strcmp(winner, 'None')
@@ -160,22 +150,14 @@ try
             break;
         end
 
+        % 다음 화면 전환까지 dt(0.25초) 대기 후, 휴식 중인 타원의 남은 휴식 시간 차감
         WaitSecs(dt);
+        restLeft = max(0, restLeft - dt);
     end
 
-    % CSV 파일에 최종 결과 요약 추가 후 닫기
-    fprintf(csvFileID, '\nRace Result,%s\nRed Total Distance,%.0f\nBlue Total Distance,%.0f\nElapsed Time,%.2f\n', ...
-        winner, totalDist(1), totalDist(2), elapsedTime);
-    fclose(csvFileID);
-
-    % 메모장(.txt) 요약 파일 저장
-    txtFilename = sprintf('RaceSummary_%s.txt', timestamp);
-    txtFileID = fopen(txtFilename, 'w');
-    fprintf(txtFileID, 'Race Result: %s\n', winner);
-    fprintf(txtFileID, 'Red Total Distance: %.0f pixels\n', totalDist(1));
-    fprintf(txtFileID, 'Blue Total Distance: %.0f pixels\n', totalDist(2));
-    fprintf(txtFileID, 'Elapsed Time: %.2f seconds\n', elapsedTime);
-    fclose(txtFileID);
+    % 파일 맨 아래에 최종 경기 결과와 총 이동 거리를 기록하고 닫기
+    fprintf(fileID, '\nResult,%s\nRed Total,%d\nBlue Total,%d\n', winner, totalDist(1), totalDist(2));
+    fclose(fileID);
 
     KbQueueRelease;
     sca;

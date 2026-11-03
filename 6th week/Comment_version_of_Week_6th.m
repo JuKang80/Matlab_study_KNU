@@ -13,7 +13,7 @@ sca;
 
 % 기본설정2
 Screen('Preference', 'SkipSyncTests', 1);
-PsychDefaultSetup(2);
+PsychDefaultSetup(1);
 
 try
     screens = Screen('Screens');
@@ -55,8 +55,8 @@ try
     blueX = startX + ovalWidth / 2;
 
     % 랜덤 이동 거리 범위
-    minStep = 1;
-    maxStep = 10;
+    minStep = 10;
+    maxStep = 45;
 
     % 누적 이동 거리
     redTotal = 0;
@@ -114,60 +114,58 @@ try
         redCurrent = 0;
         blueCurrent = 0;
 
-        % 빨간 타원 이동
-        if redX < finishX && currentTime >= redRestUntil
+        % 이전 프레임에서 중간 지점을 통과했다면 이번 프레임부터 5초 휴식 시작
+        if redX >= middleX && ~redRested && (redX + ovalWidth/2 < finishX)
+            redRestUntil = currentTime + restDuration;
+            redRested = true;
+        end
+
+        if blueX >= middleX && ~blueRested && (blueX + ovalWidth/2 < finishX)
+            blueRestUntil = currentTime + restDuration;
+            blueRested = true;
+        end
+
+        % 빨간 타원 이동 (타원 오른쪽 끝 기준 도착 판정)
+        if (redX + ovalWidth/2 < finishX) && currentTime >= redRestUntil
 
             % 휴식이 끝났으면 휴식 상태 해제
             redRestUntil = 0;
 
-            % 랜덤한 거리만큼 이동
+            % 랜덤한 거리만큼 이동 (뽑힌 이동 거리와 누적 거리는 그대로 기록)
             redCurrent = randi([minStep, maxStep]);
-
-            % 도착 지점을 넘어가지 않도록 제한
-            redCurrent = min(redCurrent, finishX - redX);
-
-            redX = redX + redCurrent;
             redTotal = redTotal + redCurrent;
 
-            % 중간 지점을 처음 통과하면 5초 휴식
-            if redX >= middleX && ~redRested
-                redRestUntil = GetSecs + restDuration;
-                redRested = true;
-            end
+            % 타원의 오른쪽 끝이 도착 지점을 넘어가지 않도록 위치만 제한
+            redX = min(redX + redCurrent, finishX - ovalWidth/2);
         end
 
-        % 파란 타원 이동
-        if blueX < finishX && currentTime >= blueRestUntil
+        % 파란 타원 이동 (타원 오른쪽 끝 기준 도착 판정)
+        if (blueX + ovalWidth/2 < finishX) && currentTime >= blueRestUntil
 
             % 휴식이 끝났으면 휴식 상태 해제
             blueRestUntil = 0;
 
-            % 랜덤한 거리만큼 이동
+            % 랜덤한 거리만큼 이동 (뽑힌 이동 거리와 누적 거리는 그대로 기록)
             blueCurrent = randi([minStep, maxStep]);
-
-            % 도착 지점을 넘어가지 않도록 제한
-            blueCurrent = min(blueCurrent, finishX - blueX);
-
-            blueX = blueX + blueCurrent;
             blueTotal = blueTotal + blueCurrent;
 
-            % 중간 지점을 처음 통과하면 5초 휴식
-            if blueX >= middleX && ~blueRested
-                blueRestUntil = GetSecs + restDuration;
-                blueRested = true;
-            end
+            % 타원의 오른쪽 끝이 도착 지점을 넘어가지 않도록 위치만 제한
+            blueX = min(blueX + blueCurrent, finishX - ovalWidth/2);
         end
 
         % 남은 휴식 시간 계산
-        redRestRemaining = max(0, redRestUntil - GetSecs);
-        blueRestRemaining = max(0, blueRestUntil - GetSecs);
+        redRestRemaining = max(0, redRestUntil - currentTime);
+        blueRestRemaining = max(0, blueRestUntil - currentTime);
 
-        % 승리 조건 확인
-        if redX >= finishX && blueX >= finishX
+        % 승리 조건 확인 (타원의 오른쪽 끝이 도착선에 도달했는지 판정)
+        redFinished = (redX + ovalWidth/2) >= finishX;
+        blueFinished = (blueX + ovalWidth/2) >= finishX;
+
+        if redFinished && blueFinished
             winner = 'Draw';
-        elseif redX >= finishX
+        elseif redFinished
             winner = 'Red Win';
-        elseif blueX >= finishX
+        elseif blueFinished
             winner = 'Blue Win';
         end
 
@@ -276,7 +274,7 @@ try
         end
 
         % 다음 화면 업데이트까지 대기
-        WaitSecs(0.05);
+        WaitSecs(0.25);
     end
 
     % 키보드 큐 종료
@@ -292,7 +290,7 @@ try
     timestamp = datestr(now, 'yyyymmdd_HHMMSS');
     filename = ['RaceResult_' timestamp '.csv'];
 
-    % 이동 기록을 테이블로 변환
+    % 이동 기록을 테이블로 변환 및 경기 결과(Winner) 열 추가
     movementTable = array2table(movementData, ...
         'VariableNames', { ...
         'Frame', ...
@@ -305,6 +303,7 @@ try
         'BlueTotalDistance', ...
         'RedRestRemaining', ...
         'BlueRestRemaining'});
+    movementTable.RaceResult = repmat({winner}, size(movementData, 1), 1);
 
     % 이동 기록 저장
     writetable(movementTable, filename);
@@ -317,8 +316,7 @@ try
     fprintf(fileID, 'Race Result: %s\n', winner);
     fprintf(fileID, 'Red Total Distance: %.0f pixels\n', redTotal);
     fprintf(fileID, 'Blue Total Distance: %.0f pixels\n', blueTotal);
-    fprintf(fileID, 'Elapsed Time: %.2f seconds\n', ...
-        GetSecs - startTime);
+    fprintf(fileID, 'Elapsed Time: %.2f seconds\n', elapsedTime);
 
     fclose(fileID);
 

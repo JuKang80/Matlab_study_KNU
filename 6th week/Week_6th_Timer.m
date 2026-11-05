@@ -45,14 +45,14 @@ try
 
     redColor = [255, 0, 0];               % 빨간색 RGB 벡터
     blueColor = [0, 0, 255];              % 파란색 RGB 벡터
-    ovalColors = [redColor', blueColor']; % 3행 2열 [R; G; B] 색상 행렬
+    ovalColor = [redColor', blueColor']; % 3행 2열 [R; G; B] 색상 행렬
 
     % 3. 상태 변수 초기화 (1x2 행벡터: [Red, Blue])
-    posX = [startX, startX] + ovalWidth / 2; % 출발선에 타원 왼쪽 끝이 닿도록 중심 좌표 지정
-    posY = screenHeight * [0.35, 0.65];   % 상단(35%)과 하단(65%) 트랙 분리 배치
+    positionX = [startX, startX] + ovalWidth / 2; % 출발선에 타원 왼쪽 끝이 닿도록 중심 좌표 지정
+    positionY = screenHeight * [0.35, 0.65];   % 상단(35%)과 하단(65%) 트랙 분리 배치
 
-    totalDist = [0, 0];                   % [선택2] 누적 이동 거리
-    currDist = [0, 0];                    % [선택2] 현재 스텝 이동 거리
+    totalDistant = [0, 0];                   % [선택2] 누적 이동 거리
+    currDistant = [0, 0];                    % [선택2] 현재 스텝 이동 거리
     restLeft = [0, 0];                    % [선택1] 남은 5초 휴식 시간
     hasRested = [false, false];           % [선택1] 중간선 5초 휴식 완료 여부 플래그
 
@@ -81,8 +81,8 @@ try
     Screen('DrawLine', window, white, middleX, 50, middleX, screenHeight - 50, 1);
 
     % 타원 4x2 좌표 행렬 계산 및 일괄 그리기
-    ovalRects = [posX - ovalWidth/2; posY - ovalHeight/2; posX + ovalWidth/2; posY + ovalHeight/2];
-    Screen('FillOval', window, ovalColors, ovalRects);
+    ovalRects = [positionX - ovalWidth/2; positionY - ovalHeight/2; positionX + ovalWidth/2; positionY + ovalHeight/2];
+    Screen('FillOval', window, ovalColor, ovalRects);
 
     DrawFormattedText(window, 'Ready... Race will start in 3 seconds (ESC to quit)', 'center', screenHeight - 80, white);
     Screen('Flip', window);
@@ -106,23 +106,23 @@ try
         % 1. 두 타원(i=1: Red, i=2: Blue)의 휴식 및 이동 판정
         for i = 1:2
             % 중간선 도달 판정 (처음 넘었을 때 1회만 5초 휴식 등록)
-            if posX(i) >= middleX && ~hasRested(i)
+            if positionX(i) >= middleX && ~hasRested(i)
                 restLeft(i) = restDuration; % 5초 등록
                 hasRested(i) = true;        % 재등록 방지
             end
 
             % 휴식 중인지 여부에 따른 이동 처리
             if restLeft(i) > 0
-                currDist(i) = 0; % 휴식 중인 타원은 이번 3초 턴에서 이동 거리 0 (제자리 대기)
+                currDistant(i) = 0; % 휴식 중인 타원은 이번 3초 턴에서 이동 거리 0 (제자리 대기)
             else
-                currDist(i) = randi([minStep, maxStep]); % 10~45 난수 생성
-                totalDist(i) = totalDist(i) + currDist(i);
-                posX(i) = min(posX(i) + currDist(i), finishX - ovalWidth/2); % 결승선 고정
+                currDistant(i) = randi([minStep, maxStep]); % 10~45 난수 생성
+                totalDistant(i) = totalDistant(i) + currDistant(i);
+                positionX(i) = min(positionX(i) + currDistant(i), finishX - ovalWidth/2); % 결승선 고정
             end
         end
 
-        % 2. 결승선 통과 판정 (타원의 오른쪽 끝 'posX + ovalWidth/2' 기준)
-        isFinished = (posX + ovalWidth/2) >= finishX;
+        % 2. 결승선 통과 판정 (타원의 오른쪽 끝 'positionX + ovalWidth/2' 기준)
+        isFinished = (positionX + ovalWidth/2) >= finishX;
         if isFinished(1) && isFinished(2)
             winner = 'Draw';
         elseif isFinished(1)
@@ -132,7 +132,7 @@ try
         end
 
         % 3. CSV 데이터 기록
-        fprintf(fileID, '%d,%d,%d,%d,%d\n', step, currDist(1), currDist(2), totalDist(1), totalDist(2));
+        fprintf(fileID, '%d,%d,%d,%d,%d\n', step, currDistant(1), currDistant(2), totalDistant(1), totalDistant(2));
 
         % -----------------------------------------------------------------
         % 4. [타이머 핵심 메커니즘] 3초 카운트다운 루프
@@ -152,21 +152,21 @@ try
             Screen('DrawLine', window, white, middleX, 50, middleX, screenHeight - 50, 1);
 
             % 타원 그리기
-            ovalRects = [posX - ovalWidth/2; posY - ovalHeight/2; posX + ovalWidth/2; posY + ovalHeight/2];
-            Screen('FillOval', window, ovalColors, ovalRects);
+            ovalRects = [positionX - ovalWidth/2; positionY - ovalHeight/2; positionX + ovalWidth/2; positionY + ovalHeight/2];
+            Screen('FillOval', window, ovalColor, ovalRects);
 
             % [선택2] 이동 거리 표시
-            redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDist(1), currDist(1));
-            blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDist(2), currDist(2));
-            DrawFormattedText(window, redText, 'center', posY(1) - 60, redColor);
-            DrawFormattedText(window, blueText, 'center', posY(2) - 60, blueColor);
+            redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDistant(1), currDistant(1));
+            blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDistant(2), currDistant(2));
+            DrawFormattedText(window, redText, 'center', positionY(1) - 60, redColor);
+            DrawFormattedText(window, blueText, 'center', positionY(2) - 60, blueColor);
 
             % [선택1] 5초 휴식 남은 시간 실시간 표시 (소수점 1자리)
             if restLeft(1) > 0
-                DrawFormattedText(window, sprintf('Red Rest: %.1f sec', restLeft(1)), 'center', posY(1) + 40, white);
+                DrawFormattedText(window, sprintf('Red Rest: %.1f sec', restLeft(1)), 'center', positionY(1) + 40, white);
             end
             if restLeft(2) > 0
-                DrawFormattedText(window, sprintf('Blue Rest: %.1f sec', restLeft(2)), 'center', posY(2) + 40, white);
+                DrawFormattedText(window, sprintf('Blue Rest: %.1f sec', restLeft(2)), 'center', positionY(2) + 40, white);
             end
 
             % 화면 하단 3초 타이머 카운트다운 및 종료 안내 표시
@@ -213,7 +213,7 @@ try
     end
 
     % 6. 최종 경기 결과 기록 및 파일 닫기
-    fprintf(fileID, '\nResult,%s\nRed Total,%d\nBlue Total,%d\n', winner, totalDist(1), totalDist(2));
+    fprintf(fileID, '\nResult,%s\nRed Total,%d\nBlue Total,%d\n', winner, totalDistant(1), totalDistant(2));
     fclose(fileID);
 
     % 정상 종료 자원 해제

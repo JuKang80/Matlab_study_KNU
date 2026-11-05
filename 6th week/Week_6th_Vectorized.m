@@ -52,14 +52,14 @@ ovalHeight = 35;                      % 타원의 세로 직경 (가로 != 세�
 
 redColor = [255, 0, 0];               % 빨간색 RGB 벡터
 blueColor = [0, 0, 255];              % 파란색 RGB 벡터
-ovalColors = [redColor', blueColor']; % Screen('FillOval')에 한 번에 넣기 위해 3행 2열 행렬로 구성합니다.
+ovalColor = [redColor', blueColor']; % Screen('FillOval')에 한 번에 넣기 위해 3행 2열 행렬로 구성합니다.
 
 % 3. 상태 변수 초기화 (1x2 행벡터: 항상 1열은 Red, 2열은 Blue를 의미합니다)
-posX = [startX, startX] + ovalWidth / 2; % 출발할 때 타원의 왼쪽 끝이 출발선에 딱 닿도록 중심 좌표를 설정합니다.
-posY = screenHeight * [0.35, 0.65];   % 빨간 타원은 상단 트랙(35%), 파란 타원은 하단 트랙(65%)에 배치합니다.
+positionX = [startX, startX] + ovalWidth / 2; % 출발할 때 타원의 왼쪽 끝이 출발선에 딱 닿도록 중심 좌표를 설정합니다.
+positionY = screenHeight * [0.35, 0.65];   % 빨간 타원은 상단 트랙(35%), 파란 타원은 하단 트랙(65%)에 배치합니다.
 
-totalDist = [0, 0];                   % [선택2] 각 타원의 누적 총 이동 거리
-currDist = [0, 0];                    % [선택2] 각 타원의 현재 스텝 이동 거리
+totalDistant = [0, 0];                   % [선택2] 각 타원의 누적 총 이동 거리
+currDistant = [0, 0];                    % [선택2] 각 타원의 현재 스텝 이동 거리
 restLeft = [0, 0];                    % [선택1] 각 타원의 남은 휴식 시간 (카운트다운용)
 hasRested = [false, false];           % [선택1] 중간선을 넘어 5초 휴식을 이미 치렀는지 기억하는 논리형(logical) 플래그
 
@@ -88,8 +88,8 @@ Screen('DrawLine', window, white, finishX, 50, finishX, screenHeight - 50, 2); %
 Screen('DrawLine', window, white, middleX, 50, middleX, screenHeight - 50, 1); % 중간선
 
 % 두 타원의 [Left; Top; Right; Bottom] 좌표를 4행 2열 행렬로 묶어 동시에 그립니다.
-ovalRects = [posX - ovalWidth/2; posY - ovalHeight/2; posX + ovalWidth/2; posY + ovalHeight/2];
-Screen('FillOval', window, ovalColors, ovalRects);
+ovalRects = [positionX - ovalWidth/2; positionY - ovalHeight/2; positionX + ovalWidth/2; positionY + ovalHeight/2];
+Screen('FillOval', window, ovalColor, ovalRects);
 
 DrawFormattedText(window, 'Ready... Race will start soon! (ESC to quit)', 'center', screenHeight - 70, white);
 Screen('Flip', window);               % 출발선 정지 화면을 화면에 띄웁니다.
@@ -105,32 +105,32 @@ while true
     % 1. [핵심] for i = 1:2 루프를 완전히 대체한 논리 인덱싱(Logical Indexing)
     % ---------------------------------------------------------------------
     % (1) 중간선 통과 감지:
-    %     'posX >= middleX'는 1x2 logical 배열 [red통과, blue통과]를 반환합니다.
+    %     'positionX >= middleX'는 1x2 logical 배열 [red통과, blue통과]를 반환합니다.
     %     여기에 '~hasRested'를 AND(&) 연산하면 "이번에 처음으로 중간선을 넘은 타원"만 true가 됩니다.
-    triggerRest = (posX >= middleX) & ~hasRested;
+    triggerRest = (positionX >= middleX) & ~hasRested;
     restLeft(triggerRest) = restDuration;   % true에 해당하는 타원 위치에만 5.0초를 대입합니다.
     hasRested(triggerRest) = true;          % true에 해당하는 타원 위치만 쉰 적 있음(true)으로 변경합니다.
 
     % (2) 이동 처리:
     %     현재 남은 휴식 시간이 0보다 큰 타원들을 찾습니다.
     isResting = (restLeft > 0);
-    currDist = zeros(1, 2);                 % 일단 두 타원 모두 이동 거리를 0으로 초기화합니다.
+    currDistant = zeros(1, 2);                 % 일단 두 타원 모두 이동 거리를 0으로 초기화합니다.
     activeCount = sum(~isResting);          % 현재 쉬지 않고 달려야 하는 타원의 개수(0, 1, 또는 2)
 
     if activeCount > 0
         % 쉬고 있지 않은 타원(~isResting) 자리에만 activeCount 개수만큼의 난수(10~45)를 뽑아 꽂아 넣습니다!
-        currDist(~isResting) = randi([minStep, maxStep], 1, activeCount);
+        currDistant(~isResting) = randi([minStep, maxStep], 1, activeCount);
     end
 
     % (3) 누적 거리 및 타원 위치 일괄 갱신 (1x2 벡터 덧셈):
-    totalDist = totalDist + currDist;
+    totalDistant = totalDistant + currDistant;
     % 도착선(finishX)을 타원의 오른쪽 끝이 뚫고 나가지 않도록 min 함수로 한 번에 제한합니다.
-    posX = min(posX + currDist, finishX - ovalWidth/2);
+    positionX = min(positionX + currDistant, finishX - ovalWidth/2);
 
     % ---------------------------------------------------------------------
-    % 2. 결승선 통과 판정 (타원의 오른쪽 테두리 'posX + ovalWidth/2' 기준)
+    % 2. 결승선 통과 판정 (타원의 오른쪽 테두리 'positionX + ovalWidth/2' 기준)
     % ---------------------------------------------------------------------
-    isFinished = (posX + ovalWidth/2) >= finishX; % 1x2 logical 벡터
+    isFinished = (positionX + ovalWidth/2) >= finishX; % 1x2 logical 벡터
     if isFinished(1) && isFinished(2)
         winner = 'Draw';              % 두 타원이 동시에 닿았다면 무승부
     elseif isFinished(1)
@@ -148,21 +148,21 @@ while true
     Screen('DrawLine', window, white, middleX, 50, middleX, screenHeight - 50, 1);
 
     % 4행 2열 행렬로 묶인 두 타원을 단 한 번의 호출로 렌더링합니다.
-    ovalRects = [posX - ovalWidth/2; posY - ovalHeight/2; posX + ovalWidth/2; posY + ovalHeight/2];
-    Screen('FillOval', window, ovalColors, ovalRects);
+    ovalRects = [positionX - ovalWidth/2; positionY - ovalHeight/2; positionX + ovalWidth/2; positionY + ovalHeight/2];
+    Screen('FillOval', window, ovalColor, ovalRects);
 
     % [선택2] 이동 거리 텍스트 표시
-    redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDist(1), currDist(1));
-    blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDist(2), currDist(2));
-    DrawFormattedText(window, redText, 'center', posY(1) - 60, redColor);
-    DrawFormattedText(window, blueText, 'center', posY(2) - 60, blueColor);
+    redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDistant(1), currDistant(1));
+    blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDistant(2), currDistant(2));
+    DrawFormattedText(window, redText, 'center', positionY(1) - 60, redColor);
+    DrawFormattedText(window, blueText, 'center', positionY(2) - 60, blueColor);
 
     % [선택1] 5초 휴식 남은 시간 실시간 표시 (소수점 1자리)
     if restLeft(1) > 0
-        DrawFormattedText(window, sprintf('Red Rest: %.1f sec', restLeft(1)), 'center', posY(1) + 40, white);
+        DrawFormattedText(window, sprintf('Red Rest: %.1f sec', restLeft(1)), 'center', positionY(1) + 40, white);
     end
     if restLeft(2) > 0
-        DrawFormattedText(window, sprintf('Blue Rest: %.1f sec', restLeft(2)), 'center', posY(2) + 40, white);
+        DrawFormattedText(window, sprintf('Blue Rest: %.1f sec', restLeft(2)), 'center', positionY(2) + 40, white);
     end
 
     % 승자가 나왔다면 화면 중앙에 결과 문구를 띄우고, 아니면 하단에 종료 안내를 띄웁니다.
@@ -178,7 +178,7 @@ while true
     % ---------------------------------------------------------------------
     % 4. [문제 2] 현재 스텝 데이터를 CSV 파일에 한 줄 기록
     % ---------------------------------------------------------------------
-    fprintf(fileID, '%d,%d,%d,%d,%d\n', step, currDist(1), currDist(2), totalDist(1), totalDist(2));
+    fprintf(fileID, '%d,%d,%d,%d,%d\n', step, currDistant(1), currDistant(2), totalDistant(1), totalDistant(2));
 
     % 승부가 났으면 결과 문구를 2초 동안 화면에 보여준 뒤 while 루프를 탈출합니다.
     if ~strcmp(winner, 'None')
@@ -199,7 +199,7 @@ while true
 end
 
 % 5. 최종 경기 결과 기록 및 종료
-fprintf(fileID, '\nResult,%s\nRed Total,%d\nBlue Total,%d\n', winner, totalDist(1), totalDist(2));
+fprintf(fileID, '\nResult,%s\nRed Total,%d\nBlue Total,%d\n', winner, totalDistant(1), totalDistant(2));
 fclose(fileID);
 disp(['Experiment Finished. Result: ', winner]);
 

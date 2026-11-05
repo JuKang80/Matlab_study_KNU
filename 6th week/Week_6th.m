@@ -7,208 +7,166 @@
 % [선택 문제2] 두 타원이 이동한 거리를 화면에 띄우세요.
 % ex) red 총합: 300pixel, 현재: 5pixel
 
-% =========================================================================
-% [학습용 실습 파일]
-% 주요 구현 로직이 [빈칸 1] ~ [빈칸 11]로 비워져 있습니다.
-% 각 빈칸의 힌트를 참고하여 직접 코드를 채워 넣으며 실습해보세요!
-% (정답 확인 및 참고: Comment_version_of_Week_6th.m)
-% =========================================================================
-
-% 기본설정 1
+%% ======================
+% 기본 설정 1
 clear;
 clc;
 close all;
 sca;
 
-% 기본설정 2
-Screen('Preference', 'SkipSyncTests', 1);
+% 기본 설정 2
+Screen('Preferences', 'SkipSyncTests', 1);
 PsychDefaultSetup(1);
+%% =======================
 
 try
+    % 모니터 번호와 기본 색상값을 정의한다. 
     screens = Screen('Screens');
     screenNumber = max(screens);
     white = WhiteIndex(screenNumber);
     black = BlackIndex(screenNumber);
     gray = white / 2;
 
+    % 실험 화면 창을 열고 텍스트 및 투명도 옵션을 설정한다. 
     [window, windowRect] = Screen('OpenWindow', screenNumber, gray);
-    Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
-    Screen('TextSize', window, 24);
+    Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA'); % 알파블렌딩
+    Screen('TextSize', window, 24); % 화면에 출력할 글자의 기본 크기를 24포인트로 설정
 
-    % 화면 크기 및 기준선(출발선, 중간선, 도착선) 설정
-    screenWidth = windowRect(3);
-    screenHeight = windowRect(4);
+    % 화면 가로/세로 해상도를 추출하고 기준선의 X 좌표를 구한다. 
+    screenWidth = windowRect(3); % 화면 전체 가로 픽셀 값 가져옴 
+    screenHeight = windowRect(4); % 화면 전체 세로 픽셀 값 가져옴
 
-    startX = 50;
-    middleX = screenWidth / 2;
-    finishX = screenWidth - 80;
+    startX = 50; % 출발선은 화면 왼쪽 끝에서 50픽셀 떨어진 지점으로 설정
+    middleX = screenWidth / 2; % 휴식 기준은 X 좌표 가로의 절반으로 구했다. 
+    finishX = screenWidth - 80; % 도착선은 화면 오른쪽 끝에서 80픽셀만큼 들어간 곳으로 설정했다. 
 
-    % 타원 크기 및 색상 설정 (1열: 빨간 타원, 2열: 파란 타원)
-    ovalWidth = 50;
-    ovalHeight = 35;
+    ovalWidth = 50; % 타원의 가로 길이를 50픽셀로 설정했다. 
+    ovalHeight = 35; % 타원의 세로 길이를 35픽셀로 지정했다. 
+    % 여기서 가로와 세로가 달라야 타원이기에 이렇게 설정했다. 
 
-    redColor = [255, 0, 0];
+    redColor = [255, 0, 0]; 
     blueColor = [0, 0, 255];
-    ovalColors = [redColor', blueColor']; % 3행 2열 색상 행렬
+    ovalColor = [redColor', blueColor']; % Screen('FillOval')에 한번에 넣기 위해 각 색상을 세로(열벡터)로 세워 3행 2열 행렬로 묶었다. 
 
-    % 두 타원의 상태 변수 초기화 (1x2 행벡터 -> 1열: Red, 2열: Blue)
-    posX = [startX, startX] + ovalWidth / 2;
-    posY = screenHeight * [0.35, 0.65];
+    positionY = screenHeight * [0.35, 0.65];
 
-    totalDist = [0, 0];         % 누적 이동 거리
-    currDist = [0, 0];          % 현재 이동 거리
-    restLeft = [0, 0];          % 남은 휴식 시간(초)
-    hasRested = [false, false]; % 중간 지점 휴식 완료 여부
+    totalDistant = [0, 0];
+    currDistant = [0, 0];
+    restLeft = [0, 0];
+    hasRested = [false, false];
 
-    % 이동 범위 및 타이머 설정
-    minStep = 10;
-    maxStep = 45;
-    restDuration = 5;           % 중간 지점 휴식 시간 (5초)
-    dt = 0.25;                  % 화면 전환 주기 (0.25초)
+    minStep = 0; 
+    maxStep = round((finishX - startX - ovalWidth) / 2);
 
-    winner = 'None';
-    step = 0;
+    restDuration = 5; % 중간 지점 통과 시 부여할 휴식시간 5초이다. 
+    dt = 0.5; % 화면 전환 간 대기 시간 (초)
+    moveInterval = 2.0; % 타원이 실제로 이동하는 주기 (초)
+    currentTime = 0; % 경과 시간 타이머 (초)
+    
+    winner = 'None'; % 우승자가 전해지기 전까지 None으로 문자열을 설정한다. 
+    step = 0; % 몇 번째 화면 전환(스텝)인지 세는 변수이다. 
+    
+    history = []; % 매 스텝의 기록을 쌓아두기 위한 빈 배열 선언
 
-    % ---------------------------------------------------------------------
-    % [빈칸 1] 결과 저장용 CSV 파일 열기 및 헤더(컬럼명) 작성
-    % 힌트: fopen을 'w'(쓰기 모드)로 열고, fprintf로 'Step,RedCurrent,...' 헤더 작성
-    % ---------------------------------------------------------------------
-    % fileID = ________________________________________;
-    % fprintf(________________________________________);
-
-    % 키보드 입력 큐 시작
     KbQueueCreate;
-    KbQueueStart;
+    KbQueueStart; % 키보드 입력을 받기 위한 설정 
 
-    % 메인 경주 루프
+    %% 메인 경주 루프 
     while true
-        step = step + 1;
+        currentTime = currentTime + dt; % 타이머 시간 갱신
 
-        % -----------------------------------------------------------------
-        % 1. 두 타원(1: Red, 2: Blue)의 휴식 및 랜덤 이동 처리
-        % -----------------------------------------------------------------
-        for i = 1:2
-            % -------------------------------------------------------------
-            % [빈칸 2] 중간 지점(middleX) 통과 판정 및 5초 휴식 시작
-            % 힌트: 타원 위치(posX(i))가 중간지점 이상이고, 아직 휴식한 적이 없다면(~hasRested(i))
-            %       restLeft(i)에 restDuration(5초)을 넣고, hasRested(i)를 true로 변경
-            % -------------------------------------------------------------
-            % if ________________________________________
-            %     restLeft(i) = ________________;
-            %     hasRested(i) = _______________;
-            % end
+        % 타원이 움직일 타이밍인지 판단 (2초 주기)
+        isMoveTime = (mod(currentTime, moveInterval) < 0.01);
 
-            % -------------------------------------------------------------
-            % [빈칸 3] 휴식 및 이동 거리 계산
-            % 힌트: restLeft(i)가 0보다 크면 currDist(i)는 0 (제자리 대기)
-            %       그렇지 않다면 randi([minStep, maxStep])로 랜덤 이동 거리 생성 후
-            %       totalDist와 posX를 누적 갱신 (단, posX는 finishX를 넘지 않도록 min 처리)
-            % -------------------------------------------------------------
-            % if restLeft(i) > 0
-            %     currDist(i) = ____;
-            % else
-            %     currDist(i) = ________________________;
-            %     totalDist(i) = ________________________;
-            %     posX(i) = ________________________;
-            % end
+        % 중앙을 넘었는지 체크하는 부분 
+        rightEdge = startX + totalDistant + ovalWidth;
+        startRest = (rightEdge >= middleX) & ~hasRested;
+        
+        restLeft(startRest) = restDuration;
+        hasRested(startRest) = true;
+
+        if isMoveTime
+            step = step + 1; % 실제 이동 스텝 번호를 1씩 증가시킨다.
+            randomSteps = randi([minStep, maxStep], 1, 2);
+            currDistant = randomSteps .* (restLeft == 0);
+            totalDistant = totalDistant + currDistant;
+
+            % 실제 이동한 주기에만 데이터 기록하기
+            history(step, :) = [step, currentTime, currDistant(1), currDistant(2), totalDistant(1), totalDistant(2)];
+        else
+            currDistant = [0, 0];
         end
 
-        % -----------------------------------------------------------------
-        % [빈칸 4] 2. 도착선(finishX) 통과 판정 (승자 결정)
-        % 힌트: 타원의 오른쪽 끝(posX + ovalWidth/2)이 finishX 이상인지 비교
-        %       둘 다 도착 시 'Draw', Red 도착 시 'Red Win', Blue 도착 시 'Blue Win'
-        % -----------------------------------------------------------------
-        % isFinished = ________________________________________;
-        % if isFinished(1) && isFinished(2)
-        %     winner = 'Draw';
-        % elseif isFinished(1)
-        %     winner = ____________;
-        % elseif isFinished(2)
-        %     winner = ____________;
-        % end
+        leftX = min(startX + totalDistant, finishX - ovalWidth);
+        rightX = leftX + ovalWidth;
 
-        % -----------------------------------------------------------------
-        % 3. 화면 그리기 (배경, 기준선, 두 타원, 텍스트)
-        % -----------------------------------------------------------------
-        Screen('FillRect', window, gray);
+        isFinished = (rightX >= finishX);
 
-        % 기준선 그리기 (출발선, 도착선, 중간선)
+        if isFinished(1) && isFinished(2)
+            winner = "Tie";
+        elseif isFinished(1)
+            winner = 'Red Win';
+        elseif isFinished(2)
+            winner = 'Blue Win'; 
+        end
+
+        % 버퍼에 그리기 
+        Screen('FillRect', window, gray); 
+
+        % 출발선, 도착선, 중간선 그리기 
         Screen('DrawLine', window, white, startX, 50, startX, screenHeight - 50, 2);
         Screen('DrawLine', window, white, finishX, 50, finishX, screenHeight - 50, 2);
         Screen('DrawLine', window, white, middleX, 50, middleX, screenHeight - 50, 1);
+        
+        % 두 타원의 좌표 [왼쪽X; 위쪽Y; 오른쪽X; 아래쪽Y]를 4행 2열 행렬로 묶어 한 번에 그린다. 
+        ovalRects = [leftX; positionY - ovalHeight/2; rightX; positionY + ovalHeight/2];
+        Screen('FillOval', window, ovalColor, ovalRects);
 
-        % -----------------------------------------------------------------
-        % [빈칸 5] 4행 2열 타원 좌표 행렬(ovalRects) 생성 및 타원 그리기
-        % 힌트: [왼쪽; 위; 오른쪽; 아래] 형식으로 2개 타원의 좌표 행렬 구성 후
-        %       Screen('FillOval', window, ovalColors, ovalRects) 호출
-        % -----------------------------------------------------------------
-        % ovalRects = [____________________________________________________];
-        % Screen('FillOval', ______________________________________________);
+        % 화면 상단 중앙에 전체 경주 타이머 표시
+        DrawFormattedText(window, sprintf('Race Timer: %.1f sec (Moves every %.1f sec)', currentTime, moveInterval), 'center', 30, white);
 
-        % -----------------------------------------------------------------
-        % [빈칸 6] 누적 및 현재 이동 거리 화면에 텍스트로 띄우기
-        % 힌트: sprintf를 사용해 텍스트 포맷을 만들고, DrawFormattedText로 출력
-        % -----------------------------------------------------------------
-        % redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDist(1), currDist(1));
-        % blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDist(2), currDist(2));
-        % DrawFormattedText(_______________________________________________);
-        % DrawFormattedText(_______________________________________________);
+        redText = sprintf('Red Total: %d pixel, Current: %d pixel', totalDistant(1), currDistant(1));
+        blueText = sprintf('Blue Total: %d pixel, Current: %d pixel', totalDistant(2), currDistant(2));
+        DrawFormattedText(window, redText, 'center', positionY(1) - 60, redColor);
+        DrawFormattedText(window, blueText, 'center', positionY(2) - 60, blueColor);
 
-        % -----------------------------------------------------------------
-        % [빈칸 7] 남은 휴식 시간 타이머 화면에 표시
-        % 힌트: restLeft(1) > 0 일 때와 restLeft(2) > 0 일 때 각각 DrawFormattedText 출력
-        % -----------------------------------------------------------------
-        % if restLeft(1) > 0
-        %     DrawFormattedText(window, sprintf('Red Rest: %.1f sec', restLeft(1)), 'center', posY(1) + 40, white);
-        % end
-        % if restLeft(2) > 0
-        %     DrawFormattedText(___________________________________________);
-        % end
-
-        % 승리 결과 표시
+        % 2. [선택 문제1] 휴식 중인 타원의 남은 휴식 시간 표시
+        if restLeft(1) > 0
+            DrawFormattedText(window, sprintf('Red Rest: %.1f sec', restLeft(1)), 'center', positionY(1) + 40, white);
+        end
+        if restLeft(2) > 0
+            DrawFormattedText(window, sprintf('Blue Rest: %.1f sec', restLeft(2)), 'center', positionY(2) + 40, white);
+        end
+        
+        % 3. 승자가 결정되었다면 화면 정중앙에 결과 표시
         if ~strcmp(winner, 'None')
             DrawFormattedText(window, winner, 'center', 'center', white);
         end
 
-        % -----------------------------------------------------------------
-        % [빈칸 8] 백버퍼에 그린 화면을 실제 모니터에 출력(Flip)
-        % 힌트: Screen('Flip', ...)
-        % -----------------------------------------------------------------
-        % Screen(________, ________);
+        % 지금까지 그린 요소를 화면으로 전환 
+        Screen('Flip', window); 
 
-        % -----------------------------------------------------------------
-        % [빈칸 9] 현재 스텝의 이동 데이터를 CSV 파일에 한 줄 기록
-        % 힌트: fprintf(fileID, '%d,%d,%d,%d,%d\n', step, ...)
-        % -----------------------------------------------------------------
-        % fprintf(fileID, _________________________________________________);
-
-        % 승자가 결정되면 2초간 결과를 보여준 뒤 루프 종료
+        % 승자 결정 시 결과 보여주기 
         if ~strcmp(winner, 'None')
             WaitSecs(2);
             break;
         end
 
-        % ESC 입력 시 중단
+        % ESC로 강제 종료 확인 
         [pressed, firstPress] = KbQueueCheck;
         if pressed && firstPress(KbName('ESCAPE'))
             winner = 'Aborted';
             break;
         end
 
-        % -----------------------------------------------------------------
-        % [빈칸 10] 화면 전환 주기 대기 및 남은 휴식 시간 차감
-        % 힌트: WaitSecs(dt)로 대기하고, restLeft에서 dt를 뺀 값을 max(0, ...) 처리
-        % -----------------------------------------------------------------
-        % WaitSecs(____);
-        % restLeft = max(0, ________________);
+        % 다음 화면 전환까지 dt 대기 후 남은 휴식 시간 차감 
+        WaitSecs(dt);
+        restLeft = max(0, restLeft - dt);
     end
 
-    % ---------------------------------------------------------------------
-    % [빈칸 11] 최종 경기 결과 및 총 이동 거리 기록 후 파일 닫기
-    % 힌트: fprintf로 최종 요약 정보를 기록하고 fclose(fileID) 호출
-    % ---------------------------------------------------------------------
-    % fprintf(fileID, '\nResult,%s\nRed Total,%d\nBlue Total,%d\n', winner, totalDist(1), totalDist(2));
-    % fclose(________);
+    resultTable = array2table(history, 'VariableNames', {'Step', 'Time_sec', 'RedCurrent', 'BlueCurrent', 'RedTotal', 'BlueTotal'});
+    resultTable.Winner = repmat({winner}, height(resultTable), 1);
+    writetable(resultTable, 'race_result.csv');
 
     KbQueueRelease;
     sca;

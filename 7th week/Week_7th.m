@@ -60,8 +60,10 @@ try
             [~, ~, buttons] = GetMouse(window);
             WaitSecs(0.01);
         end
-
-        rectSize = rectSize + sizeStep;
+        
+        randomSize = randi([0, 1000], 1,1); 
+        rectSize = rectSize + randomSize;
+        % rectSize = rectSize + sizeStep;
         rectColor = randi([0, 255], 1,3);
         
         if rectSize > screenHeight 

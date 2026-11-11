@@ -48,9 +48,9 @@ try
     % 2. 클릭할 때마다 얼마나 커질지 정하는 증가량을 정의하세요. (예: sizeStep = 30;)
     % 3. 처음에 보여줄 초기 RGB 색상 [R, G, B]를 정의하세요. (예: [255, 0, 0])
     % ---------------------------------------------------------------------
-    % rectSize = ____________________;
-    % sizeStep = ____________________;
-    % rectColor = ___________________;
+    rectSize = 50;
+    sizeStep = 10;
+    rectColor = [255, 255, 255];
 
     % 키보드 비동기 큐 시작 (ESC 종료 감지용)
     KbQueueCreate;
@@ -67,20 +67,12 @@ try
         % 매 스텝마다 사각형의 중심을 (centerX, centerY)에 고정시켜야 합니다.
         % 
         % PTB의 좌표 형식: [Left, Top, Right, Bottom]
-        % 
-        % [방법 A: 직접 사칙연산 계산]
-        % - Left   = centerX - (rectSize / 2);
-        % - Top    = centerY - (rectSize / 2);
-        % - Right  = centerX + (rectSize / 2);
-        % - Bottom = centerY + (rectSize / 2);
-        %
+       
         % [방법 B: PTB 내장 함수 CenterRectOnPointd 활용 (강력 추천)]
-        % - baseRect = [0, 0, rectSize, rectSize];
-        % - rectCoords = CenterRectOnPointd(baseRect, centerX, centerY);
-        % -----------------------------------------------------------------
-        % rectCoords = [_________________________________________________];
-
-        % -----------------------------------------------------------------
+        
+        baseRect = [0, 0, rectSize, rectSize]; % 배열에 저장된 값은 각각 left, top, right, bottom이다. 
+        rectCoords = CenterRectOnPointd(baseRect, centerX, centerY);
+    
         % [TODO 3] 사각형 및 안내 텍스트 화면에 그리기
         % 
         % 힌트:
@@ -89,10 +81,10 @@ try
         % 3. 안내 문구 출력: DrawFormattedText를 사용해 "Click Mouse to Grow (ESC to exit)" 등을 표시
         % 4. 모니터로 송출: Screen('Flip', window);
         % -----------------------------------------------------------------
-        % Screen('FillRect', ____________________________________________);
-        % Screen('FillRect', ____________________________________________);
-        % DrawFormattedText(_____________________________________________);
-        % Screen('Flip', ________________________________________________);
+        Screen('FillRect', window, gray);
+        Screen('FillRect', window, rectColor, rectCoords);
+        DrawFormattedText(window, 'Click mouse to Grow(ESC to exit', 'center', 'center', white);
+        Screen('Flip', window);
 
         % -----------------------------------------------------------------
         % [TODO 4] 마우스 클릭(화면 전환) 대기 및 디바운싱(손 뗄 때까지 대기)
@@ -100,11 +92,11 @@ try
         % 힌트:
         % 1. GetMouse(window) 함수로 마우스 버튼 상태(buttons)를 가져올 수 있습니다.
         % 2. 사용자가 클릭할 때까지 while 루프를 돌며 기다리세요:
-        %       while ~any(buttons)
-        %           [~, ~, buttons] = GetMouse(window);
-        %           ... (대기 중 ESC 키가 눌렸는지 KbQueueCheck로 확인) ...
-        %           WaitSecs(0.01);
-        %       end
+               while ~any(buttons)
+                   [~, ~, buttons] = GetMouse(window);
+                   ... (대기 중 ESC 키가 눌렸는지 KbQueueCheck로 확인) ...
+                   WaitSecs(0.01);
+               end
         % 3. [중요!] 마우스 버튼을 길게 누르고 있을 때 사각형이 순식간에 커지는 것을
         %    방지하려면, 사용자가 마우스에서 손을 뗄 때까지 대기해야 합니다:
         %       while any(buttons)
@@ -114,6 +106,23 @@ try
         % -----------------------------------------------------------------
         
         % [마우스 클릭 감지 로직 작성 공간]
+        while ~any(button)
+            [~, ~, buttons] = GetMouse(window);
+            [keyIsDown, ~, keyCode] = KbCheck;
+            if keyIsDown
+                if KeyCode(KbName('ESCAPE'))
+                    sca;
+                    error('사용자에 의해 프로그램이 중단되었습니다.');
+                end
+            end
+            WaitSecs(0.01);
+        end
+
+        while any(buttons)
+            [~, ~, buttons] = GetMouse(window);
+            WaitSecs(0.01);
+        end
+
 
 
         % -----------------------------------------------------------------
@@ -126,9 +135,12 @@ try
         % 3. (선택 팁) 사각형이 화면 높이(screenHeight)보다 커지면 너무 커서 화면을 넘어가므로,
         %    if문으로 최대 크기를 제한하거나 초기 크기로 리셋해주는 예외 처리를 넣으면 더 좋습니다.
         % -----------------------------------------------------------------
-        % rectSize = ____________________;
-        % rectColor = ___________________;
-
+        rectSize = rectSize + sizeStep;
+        rectColor = randi([0, 255], 1,3);
+        
+        if rectSize > screenHeight 
+            rectSize = 50;
+        end
     end
 
     % 정상 종료 자원 해제

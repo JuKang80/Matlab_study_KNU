@@ -1,22 +1,15 @@
-%% =========================================================================
-% [Week 7th] 과제 실습 - 사각형 크기 확대 및 랜덤 색상 변경 (마우스 입력 기반)
-% 
-% [문제]
 % 화면이 전환될 때마다 점점 크기가 커지며 색이 랜덤으로 변하는 사각형을 그리세요.
 % 화면 전환 방식은 마우스 입력으로 설정하세요.
 
-% [기본설정 1] 이전 작업 환경 및 화면 초기화
 clear;
 clc;
 close all;
 sca;
 
-% [기본설정 2] Psychtoolbox 환경 설정
 Screen('Preference', 'SkipSyncTests', 1);
 PsychDefaultSetup(1);
 
 try
-    % 1. 화면 및 중심 좌표 설정
     screens = Screen('Screens');
     screenNumber = max(screens);
     white = WhiteIndex(screenNumber);

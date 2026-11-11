@@ -46,7 +46,6 @@ try
         buttons = 0;
         while ~any(buttons)
             [~, ~, buttons] = GetMouse(window);
-            [keyIsDown, ~, keyCode] = KbCheck;
             if KbCheck
                     sca;
                     error('사용자에 의해 프로그램이 중단되었습니다.');

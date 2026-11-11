@@ -47,7 +47,7 @@ try
     
         Screen('FillRect', window, gray);
         Screen('FillRect', window, rectColor, rectCoords);
-        DrawFormattedText(window, 'Click mouse to Grow(ESC to exit', 'center', screenHeight - 50, white);
+        DrawFormattedText(window, 'Click mouse to Grow(ESC to exit)', 'center', screenHeight - 50, white);
         Screen('Flip', window);
         
         buttons = 0;

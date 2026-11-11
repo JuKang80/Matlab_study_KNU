@@ -31,7 +31,7 @@ try
     rectColor = [255, 255, 255];
 
     % 키보드 입력을 제한하는 방식이 Queue로 감시하는 것보다 좋은것 같다. 
-    RestrictKeysForKbCheck('ESCAPE');
+    RestrictKeysForKbCheck(KbName('ESCAPE'));
 
     while true
         
@@ -51,8 +51,9 @@ try
                     sca;
                     error('사용자에 의해 프로그램이 중단되었습니다.');
             end
-            WaitSecs(0.2);
+            WaitSecs(0.01); % 0.01초마다 클릭을 감지 
         end
+        WaitSecs(0.2); % 감지된 후 나오면 0.2초 휴식
         
         randomSize = randi([0, 1000], 1,1); 
         rectSize = rectSize + randomSize;
@@ -70,7 +71,7 @@ try
     disp('Experiment finished.');
 
 catch info
-    KbQueueRelease;
+    RestrictKeysForKbCheck([]);
     sca;
     ShowCursor;
     rethrow(info);

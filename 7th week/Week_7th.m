@@ -30,8 +30,8 @@ try
     sizeStep = 10;
     rectColor = [255, 255, 255];
 
-    KbQueueCreate;
-    KbQueueStart;
+    % 키보드 입력을 제한하는 방식이 Queue로 감시하는 것보다 좋은것 같다. 
+    RestrictKeysForKbCheck('ESCAPE');
 
     while true
         
@@ -47,18 +47,11 @@ try
         while ~any(buttons)
             [~, ~, buttons] = GetMouse(window);
             [keyIsDown, ~, keyCode] = KbCheck;
-            if keyIsDown
-                if keyCode(KbName('ESCAPE'))
+            if KbCheck
                     sca;
                     error('사용자에 의해 프로그램이 중단되었습니다.');
-                end
             end
-            WaitSecs(0.01);
-        end
-
-        while any(buttons)
-            [~, ~, buttons] = GetMouse(window);
-            WaitSecs(0.01);
+            WaitSecs(0.2);
         end
         
         randomSize = randi([0, 1000], 1,1); 
@@ -71,7 +64,7 @@ try
         end
     end
 
-    KbQueueRelease;
+    RestrictKeysForKbCheck([]);
     sca;
     ShowCursor;
     disp('Experiment finished.');

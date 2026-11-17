@@ -92,11 +92,25 @@ try
     %        end
     %        (2) 영역 안/밖 판정 ('correct' or 'wrong') [TODO 6]
     %        while true                     <-- [내부 루프 2] 스페이스 전용 대기
-    %            결과 글자 띄우고, 오직 스페이스 키만 눌렸을 때 break [TODO 7]
+    %            결과 글자 띄우고, 오직 스페이스 키만 누를 때 break [TODO 7]
     %        end
     %        (3) 결과 한 줄 기록 + 절반 시행이면 휴식 [TODO 8-1]
     %    end
     %    (4) 표(Table) 또는 텍스트 파일로 저장 [TODO 8-2]
+    %
+    % 4. ★ [이 문제 해결을 위한 Psychtoolbox-3 공식 데모 참고 가이드]
+    %    (MATLAB 명령창에 아래 명령어를 그대로 입력하면 해당 데모 코드가 바로 열립니다!)
+    %    ---------------------------------------------------------------------
+    %    - open KbDemo
+    %      -> 키보드 실시간 감지 및 화면 내 오브젝트 이동 제어 (특히 KbDemoPart4 함수 집중 참고!)
+    %    - open HelloShapesDemo
+    %      -> Screen('FillPoly')로 다각형/삼각형 그리기 및 Screen('FillRect') 사각형 영역 그리기 참고
+    %    - open MullerLyerIllusion
+    %      -> 전체 시행 루프(for trial), 정답/오답 판정, 키 응답 대기, 결과 데이터 파일 저장을 갖춘 PTB3 공식 완성형 실험
+    %    - open DrawFormattedTextDemo
+    %      -> 안내 문구 및 'correct'/'wrong' 피드백 텍스트를 화면 정중앙에 그리는 방법 참고
+    %    - help PsychRects  /  help IsInRect
+    %      -> 사각형 좌표 조작 및 특정 영역 안(inside) 진입 여부 판정 내장 함수 참고
     % =====================================================================
 
     %% [Part 2] 자극(Stimulus) 및 실험 상태 변수 정의
@@ -117,6 +131,11 @@ try
 
     % ---------------------------------------------------------------------
     % [TODO 2] 키 코드, 삼각형/특정 영역 속성, 데이터 기록용 배열 선언하기
+    %
+    % ★ [PTB3 공식 데모 참고: KbDemo.m & HelloShapesDemo.m]
+    %   - 키 선언: KbName('UnifyKeyNames') 또는 PsychDefaultSetup(1) 호출 후
+    %     KbName('LeftArrow'), KbName('space') 등으로 키코드를 미리 할당 (KbDemo 참고)
+    %   - 색상/도형: RGB 또는 RGBA [R, G, B, Alpha] 배열 및 사각형 [L, T, R, B] 형식 (HelloShapesDemo 참고)
     %
     % 1) 키보드 키 번호 미리 뽑아두기 (PsychDefaultSetup(1) 덕분에 통일된 이름 사용)
     %    leftKey  = KbName('LeftArrow');   rightKey = KbName('RightArrow');
@@ -161,6 +180,11 @@ try
         % -----------------------------------------------------------------
         % [TODO 3] (시행 시작) 특정 영역 위치와 삼각형 출발 위치 정하기
         %
+        % ★ [PTB3 공식 함수 참고: help PsychRects / help CenterRectOnPointd]
+        %   - 사각형 조작은 PTB3 내장 Rect 함수를 쓰면 좌표 계산이 아주 쉽습니다.
+        %   - targetRect = CenterRectOnPointd([0, 0, targetW, targetH], tx, ty);
+        %     이거 참고해서 특정 영역의 사각형 [Left, Top, Right, Bottom]을 만드세요!
+        %
         % 1) 특정 영역(Target Zone) 배치 선택지
         %    - [선택지 A: 매 시행 랜덤 위치] (연구용 과제에 자연스러움)
         %      * randi([최소, 최대])로 중심 좌표 (tx, ty)를 뽑습니다.
@@ -180,6 +204,12 @@ try
 
         % -----------------------------------------------------------------
         % [TODO 4] (내부 루프 1: 이동 구간) 삼각형 꼭짓점 만들기 & 화면 그리기
+        %
+        % ★ [PTB3 공식 데모 참고: HelloShapesDemo.m (open HelloShapesDemo)]
+        %   - 76~79번째 줄: 다각형/삼각형 그리기 공식 예제!
+        %     polyPoints = [x1, y1; x2, y2; x3, y3] 처럼 점 좌표들을 N행 2열 행렬로 묶은 뒤,
+        %     Screen('FillPoly', window, triColor, triPoints); 를 호출하면 채워진 삼각형이 완성됩니다. 이거 참고해서 하세요!
+        %   - 54번째 줄: Screen('FillRect', window, targetColor, targetRect); 사각형 채우기 예제
         %
         % [내부 루프 1 시작: while true] 를 열고 매 프레임 아래를 반복합니다.
         %
@@ -206,6 +236,11 @@ try
 
         % -----------------------------------------------------------------
         % [TODO 5] (내부 루프 1: 이동 구간) 키보드로 움직이기 & 스페이스바 탈출
+        %
+        % ★ [PTB3 공식 데모 참고: KbDemo.m (open KbDemo 입력 -> KbDemoPart4 함수 참고)]
+        %   - 216~248번째 줄: 실시간 키보드 입력 제어의 공식 바이블 코드입니다!
+        %     while 루프 안에서 [keyIsDown, ~, keyCode] = KbCheck; 로 키를 읽고,
+        %     방향키에 따라 좌표를 갱신한 뒤 Screen('Flip')으로 다시 그리는 구조입니다. 이거 참고해서 하세요!
         %
         % - [선택지 A: KbCheck로 누르고 있는 동안 부드럽게 연속 이동] (추천)
         %   * [keyIsDown, ~, keyCode] = KbCheck;
@@ -235,6 +270,9 @@ try
         % -----------------------------------------------------------------
         % [TODO 6] (이동 루프 탈출 직후) 삼각형이 특정 영역에 들어갔는지 판정하기
         %
+        % ★ [PTB3 공식 함수 참고: IsInRect (help IsInRect)]
+        %   - inside = IsInRect(x, y, rect); 로 점이 사각형 안에 있는지 1줄로 검사 가능합니다. 이거 참고해서 하세요!
+        %
         % 연구 설계에 따라 "들어갔다"의 기준을 고르세요:
         % - [선택지 A: 삼각형 꼭짓점 3개가 전부 사각형 영역 안에 들어와야 인정] (엄격/정확)
         %   * targetRect는 [Left, Top, Right, Bottom] 즉 (1)=L, (2)=T, (3)=R, (4)=B 입니다.
@@ -244,6 +282,7 @@ try
         %                    triPoints(:,1) <= targetRect(3) & ...
         %                    triPoints(:,2) >= targetRect(2) & ...
         %                    triPoints(:,2) <= targetRect(4));
+        %     % (또는 PTB 함수 활용: isInside = all(IsInRect(triPoints(:,1), triPoints(:,2), targetRect));)
         %
         % - [선택지 B: 삼각형 중심점 (triX, triY)만 사각형 안에 있으면 인정] (간단)
         %   * PTB 내장함수 한 줄로 끝납니다:
@@ -262,6 +301,15 @@ try
         %
         % 요구사항: "correct/wrong이 뜨도록... 다시 스페이스 키 누르면 다음 시행
         %            (다른 키 누르면 반응 없어야 함)"
+        %
+        % ★ [PTB3 공식 데모 참고: MullerLyerIllusion.m & DrawFormattedTextDemo.m]
+        %   - MullerLyerIllusion.m 330~333번째 줄:
+        %       DrawFormattedText(expWin, 'Press any key to start next trial', 'center', 'center');
+        %       Screen('Flip', expWin);
+        %       KbWait([], 2); % 키 입력 대기 패턴
+        %   - "다른 키 누르면 반응 없어야 함" 필수 팁 (help RestrictKeysForKbCheck):
+        %     RestrictKeysForKbCheck([spaceKey, escKey]) 를 호출하면 스페이스와 ESC 외의 키는 아예 무시됩니다!
+        %     이거 참고해서 대기 루프를 만드세요! (루프 탈출 후 RestrictKeysForKbCheck([]) 해제 필수!)
         %
         % 1) 먼저 배경 + 영역 + 삼각형 + 결과 글자('correct' 또는 'wrong')를 화면에 띄웁니다.
         %    - 팁: correct면 초록색 [0, 255, 0], wrong이면 빨간색 [255, 0, 0]으로 주면 직관적입니다.
@@ -291,6 +339,11 @@ try
 
         % -----------------------------------------------------------------
         % [TODO 8-1] (시행 끝) 데이터 1줄 기록하기 & 절반 시행 지나면 휴식 시간 주기
+        %
+        % ★ [PTB3 공식 데모 참고: MullerLyerIllusion.m (open MullerLyerIllusion)]
+        %   - 97~100번째 줄 & 322번째 줄:
+        %     전체 시행 루프 for i = 1:ntrials 안에서 results(i, :) = [ ... ] 로 데이터를 1줄씩 차곡차곡 쌓는 패턴!
+        %     이거 참고해서 매 시행 결과를 results에 기록하세요!
         %
         % 1) 이번 시행의 [최종 삼각형 위치, 특정 영역 위치, 결과]를 results에 저장
         %    - 선택지 A(Cell Array) 사용 시 한 줄 예시 (중괄호 {} 주의!):
@@ -335,6 +388,11 @@ try
     %% [Part 4] 결과 저장 (메모장 또는 엑셀 파일 내보내기)
     % ---------------------------------------------------------------------
     % [TODO 8-2] 저장된 results를 엑셀 또는 메모장으로 파일 출력하기
+    %
+    % ★ [PTB3 공식 데모 참고: MullerLyerIllusion.m (open MullerLyerIllusion)]
+    %   - 337번째 줄: dlmwrite(fileName, results, 'delimiter', ','); 로 파일 출력하는 공식 예제.
+    %   - 현대 MATLAB에서는 테이블 변환 후 writetable(resultTable, 'week8_result.csv') 방식이
+    %     열 이름(Header)까지 함께 저장되고 엑셀과 메모장 모두에서 바로 열리므로 가장 권장됩니다.
     %
     % - [선택지 A: writetable로 CSV 또는 엑셀(.xlsx) 저장] (가장 간단, 추천!)
     %   * 열 이름 정의:

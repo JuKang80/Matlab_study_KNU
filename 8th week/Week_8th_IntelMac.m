@@ -1,6 +1,7 @@
 % 1. 임의의 삼각형을 하나 만들고 키보드를 이용하여 움직이게 만드세요.
 % 
-% 2. 삼각형이 특정 영역 내에 들어간 후, 스페이스 키를 누르면 correct, 아니면 wrong이 뜨도록 만드세요. 다시 스페이스 키를 누르면 다음 시행으로 넘어가도록 하세요(다른 키 누르면 반응 없어야 함).
+% 2. 삼각형이 특정 영역 내에 들어간 후, 스페이스 키를 누르면 correct, 아니면 wrong이 뜨도록 만드세요. 
+% 다시 스페이스 키를 누르면 다음 시행으로 넘어가도록 하세요(다른 키 누르면 반응 없어야 함).
 % 
 % 3. 메모장 또는 엑셀에 각 시행의 최종 삼각형 위치, 특정 영역의 위치, correct or wrong을 저장하세요. 
 % 
@@ -68,351 +69,145 @@ try
     screenHeight = windowRect(4);
     [centerX, centerY] = RectCenter(windowRect);
 
-    %% =====================================================================
-    % [전체 코드의 큰 그림 (다른 언어 경험자를 위한 MATLAB / PTB 구조 요약)]
-    %
-    % 1. MATLAB 필수 문법 4가지 (이것만 알면 됩니다)
-    %    - 인덱스는 0이 아니라 1부터 시작합니다. (for trial = 1:10)
-    %    - 중괄호 {} 없이 if / for / while 블록 끝을 반드시 'end'로 닫습니다.
-    %    - 대괄호 [ ] 안의 쉼표(,)는 가로(열) 연결, 세미콜론(;)은 세로(줄바꿈/행) 연결입니다.
-    %      예) [1, 2; 3, 4] -> 2행 2열 행렬
-    %    - 숫자 행렬 []에는 글자('correct')를 같이 넣을 수 없으므로,
-    %      숫자+글자를 섞어 표로 저장할 때는 중괄호 셀 배열 {} (Python 리스트와 유사)를 씁니다.
-    %
-    % 2. PTB 화면 좌표계 주의점
-    %    - 좌상단이 (0, 0)입니다. 오른쪽(+X), 아래쪽(+Y), 위쪽(-Y) 입니다!
-    %    - 사각형(Rect)은 항상 [Left, Top, Right, Bottom] 4개 숫자로 표현합니다.
-    %
-    % 3. 전체 제어 흐름 (아래 보일러플레이트 while true 자리를 이 구조로 바꿉니다)
-    %    for trial = 1:totalTrials          <-- 전체 시행 반복 (10회)
-    %        (1) 특정 영역 & 삼각형 초기 위치 배치 [TODO 3]
-    %        while true                     <-- [내부 루프 1] 방향키 이동 구간
-    %            삼각형 꼭짓점 계산 & 화면 그리기 & Flip [TODO 4]
-    %            방향키면 좌표 이동 / 스페이스면 릴리즈 후 break [TODO 5]
-    %        end
-    %        (2) 영역 안/밖 판정 ('correct' or 'wrong') [TODO 6]
-    %        while true                     <-- [내부 루프 2] 스페이스 전용 대기
-    %            결과 글자 띄우고, 오직 스페이스 키만 누를 때 break [TODO 7]
-    %        end
-    %        (3) 결과 한 줄 기록 + 절반 시행이면 휴식 [TODO 8-1]
-    %    end
-    %    (4) 표(Table) 또는 텍스트 파일로 저장 [TODO 8-2]
-    %
-    % 4. ★ [이 문제 해결을 위한 Psychtoolbox-3 공식 데모 참고 가이드]
-    %    (MATLAB 명령창에 아래 명령어를 그대로 입력하면 해당 데모 코드가 바로 열립니다!)
-    %    ---------------------------------------------------------------------
-    %    - open KbDemo
-    %      -> 키보드 실시간 감지 및 화면 내 오브젝트 이동 제어 (특히 KbDemoPart4 함수 집중 참고!)
-    %    - open HelloShapesDemo
-    %      -> Screen('FillPoly')로 다각형/삼각형 그리기 및 Screen('FillRect') 사각형 영역 그리기 참고
-    %    - open MullerLyerIllusion
-    %      -> 전체 시행 루프(for trial), 정답/오답 판정, 키 응답 대기, 결과 데이터 파일 저장을 갖춘 PTB3 공식 완성형 실험
-    %    - open DrawFormattedTextDemo
-    %      -> 안내 문구 및 'correct'/'wrong' 피드백 텍스트를 화면 정중앙에 그리는 방법 참고
-    %    - help PsychRects  /  help IsInRect
-    %      -> 사각형 좌표 조작 및 특정 영역 안(inside) 진입 여부 판정 내장 함수 참고
-    % =====================================================================
+    %% [참고] PTB3 핵심 요약 & 공식 데모 (필요할 때 명령창에 입력)
+    % - 좌표계: 좌상단 (0,0), 오른쪽(+X), 아래쪽(+Y), 위쪽(-Y) / Rect = [L, T, R, B]
+    % - 데모: open KbDemo (키보드 이동) | open HelloShapesDemo (삼각형/사각형)
+    %         open MullerLyerIllusion (시행 루프·결과 저장) | help IsInRect (영역 판정)
 
-    %% [Part 2] 자극(Stimulus) 및 실험 상태 변수 정의
-    % ---------------------------------------------------------------------
-    % [TODO 1] 반복 횟수 설정 및 절반 휴식 타이밍 자동 연동하기
-    %
-    % 요구사항: "반복 횟수는 10회, 절반 지나면 휴식, 횟수 바꾸면 휴식도 자동 변경"
-    %
-    % - [선택지 A: 절반 기준 변수를 미리 계산해 두기] (추천: 의도가 한눈에 보임)
-    %     totalTrials = 10;
-    %     restTrial = floor(totalTrials / 2);
-    %     % 설명: floor()는 소수점 버림 함수입니다. 10->5, 7->3처럼 홀수도 안전합니다.
-    %     % 나중에 루프 끝에서: if trial == restTrial && trial < totalTrials ...
-    %
-    % - [선택지 B: 루프 안에서 바로 나눗셈 조건 쓰기]
-    %     % 별도 변수 없이 루프 끝 조건문에 바로 floor(totalTrials / 2) 작성
-    % ---------------------------------------------------------------------
+    %% [Part 2] 실험 설정 및 변수 정의
+    % [TODO 1 - 완료] 시행 횟수 및 절반 휴식 타이밍 (홀수 대비 시 floor 권장)
+    totalTrials = 10;
+    restTrials = totalTrials / 2;
+    
+    % [TODO 2 - 완료] 키 코드, 삼각형/특정 영역 속성, 결과 배열 선언
+    leftKey = KbName('LeftArrow'); 
+    rightKey = KbName('RightArrow');
+    upKey = KbName('UpArrow');
+    downKey = KbName('DownArrow');
+    spaceKey = KbName('space');
+    escKey = KbName('ESCAPE');
 
-    % ---------------------------------------------------------------------
-    % [TODO 2] 키 코드, 삼각형/특정 영역 속성, 데이터 기록용 배열 선언하기
-    %
-    % ★ [PTB3 공식 데모 참고: KbDemo.m & HelloShapesDemo.m]
-    %   - 키 선언: KbName('UnifyKeyNames') 또는 PsychDefaultSetup(1) 호출 후
-    %     KbName('LeftArrow'), KbName('space') 등으로 키코드를 미리 할당 (KbDemo 참고)
-    %   - 색상/도형: RGB 또는 RGBA [R, G, B, Alpha] 배열 및 사각형 [L, T, R, B] 형식 (HelloShapesDemo 참고)
-    %
-    % 1) 키보드 키 번호 미리 뽑아두기 (PsychDefaultSetup(1) 덕분에 통일된 이름 사용)
-    %    leftKey  = KbName('LeftArrow');   rightKey = KbName('RightArrow');
-    %    upKey    = KbName('UpArrow');     downKey  = KbName('DownArrow');
-    %    spaceKey = KbName('space');       escKey   = KbName('ESCAPE');
-    %    % 팁: KbName('space')처럼 소문자 'space'를 씁니다.
-    %
-    % 2) 삼각형 크기·속도·색상 정하기
-    %    triSize = 60;         % 삼각형 크기 (픽셀)
-    %    moveSpeed = 8;        % 1프레임(키 누를 때)당 이동 픽셀
-    %    triColor = [255, 255, 255];  % RGB 색상 [0~255, 0~255, 0~255]
-    %
-    % 3) '특정 영역(Target Zone)' 모양 및 투명도 선택지
-    %    - [선택지 A: 반투명 사각형] (그리기와 진입 판정 모두 가장 간단!)
-    %      * Part 1에서 BlendFunction을 켰으므로 색상에 4번째 숫자(Alpha, 0~255)를 넣으면 투명해집니다.
-    %      * 예: targetColor = [0, 220, 120, 80];   % 80이면 은은한 반투명 초록색
-    %      * 크기: targetW = 180; targetH = 180;
-    %      * 테두리도 원하면 나중에 Screen('FrameRect', window, [0, 220, 120], targetRect, 3);
-    %    - [선택지 B: 반투명 원 또는 다각형(삼각형)]
-    %      * 원: Screen('FillOval', window, targetColor, targetRect)
-    %      * 다각형: Screen('FillPoly', window, targetColor, targetPoints)
-    %
-    % 4) 결과 저장용 빈 배열(컨테이너) 준비하기
-    %    - [선택지 A: Cell Array로 한 번에 표 데이터 쌓기] (가장 추천)
-    %      * results = cell(totalTrials, 8);  % 시행수 x 열개수 크기의 빈 셀 표
-    %      * 숫자와 문자열('correct')을 같은 표에 섞어 넣을 수 있습니다.
-    %    - [선택지 B: 시행마다 동적으로 행 추가]
-    %      * results = {};   % 빈 셀 배열로 시작해 매 시행마다 행을 추가
-    % ---------------------------------------------------------------------
-    history = []; % (보일러플레이트 기본 변수 - results 사용 시 대체 가능)
+    TriSize = 60;
+    TrimoveSpeed = 8;
+    TriColor = [255, 255, 255];
 
-    % 비동기 키보드 입력 감지 큐 시작 (방향키/ESC를 KbCheck로 할 경우 아래 두 줄은 생략 가능)
-    KbQueueCreate;
-    KbQueueStart;
+    % target zone 구현
+    targetFillColor = [0, 220, 120, 80]; % 알파 80 -> 반투명 초록색
+    targetBorderColor = [0, 220, 120, 255];
+    targetWidth = 180;
+    targetHeight = 180; 
+    
+    % 10행(시행 수) x 8열(기록 항목 8개) 빈 표 사전 할당 (숫자+글자 혼합 저장을 위해 cell 사용)
+    results = cell(totalTrials, 8);
 
-    %% [Part 3] 메인 루프 (현재는 보일러플레이트 대기 루프 -> 구현 시 아래 내용을 참고해 수정)
-    % ---------------------------------------------------------------------
-    % 구현 시작 시 아래 `while true` 줄을 `for trial = 1:totalTrials` 로 바꾸고,
-    % 그 안에 [TODO 3] ~ [TODO 8-1] 순서를 채워 넣으세요.
-    % ---------------------------------------------------------------------
-    while true
-        % -----------------------------------------------------------------
-        % [TODO 3] (시행 시작) 특정 영역 위치와 삼각형 출발 위치 정하기
-        %
-        % ★ [PTB3 공식 함수 참고: help PsychRects / help CenterRectOnPointd]
-        %   - 사각형 조작은 PTB3 내장 Rect 함수를 쓰면 좌표 계산이 아주 쉽습니다.
-        %   - targetRect = CenterRectOnPointd([0, 0, targetW, targetH], tx, ty);
-        %     이거 참고해서 특정 영역의 사각형 [Left, Top, Right, Bottom]을 만드세요!
-        %
-        % 1) 특정 영역(Target Zone) 배치 선택지
-        %    - [선택지 A: 매 시행 랜덤 위치] (연구용 과제에 자연스러움)
-        %      * randi([최소, 최대])로 중심 좌표 (tx, ty)를 뽑습니다.
-        %      * 화면 끝에서 잘리지 않게 여백(margin = 150)을 두세요:
-        %        tx = randi([margin, screenWidth - margin]);
-        %        ty = randi([margin, screenHeight - margin]);
-        %      * 사각형 좌표 [L, T, R, B] 변환 (PTB 내장함수 한 줄):
-        %        targetRect = CenterRectOnPointd([0, 0, targetW, targetH], tx, ty);
-        %        (참고 파일: 7th week/Week_7th.m 39번째 줄)
-        %    - [선택지 B: 고정 위치 또는 4방향 중 랜덤 선택]
-        %      * 예: 좌/우/상/하 정해진 좌표 목록에서 randi([1, 4])로 선택
-        %
-        % 2) 삼각형 출발 위치 선택지
-        %    - [선택지 A: 매 시행 화면 정중앙에서 출발] -> triX = centerX; triY = centerY;
-        %    - [선택지 B: 랜덤 출발] -> randi로 뽑되, 시작부터 영역 안이면 다시 뽑기
-        % -----------------------------------------------------------------
+    %% [Part 3] 메인 실험 루프
+    for trial = 1:totalTrials
 
-        % -----------------------------------------------------------------
-        % [TODO 4] (내부 루프 1: 이동 구간) 삼각형 꼭짓점 만들기 & 화면 그리기
-        %
-        % ★ [PTB3 공식 데모 참고: HelloShapesDemo.m (open HelloShapesDemo)]
-        %   - 76~79번째 줄: 다각형/삼각형 그리기 공식 예제!
-        %     polyPoints = [x1, y1; x2, y2; x3, y3] 처럼 점 좌표들을 N행 2열 행렬로 묶은 뒤,
-        %     Screen('FillPoly', window, triColor, triPoints); 를 호출하면 채워진 삼각형이 완성됩니다. 이거 참고해서 하세요!
-        %   - 54번째 줄: Screen('FillRect', window, targetColor, targetRect); 사각형 채우기 예제
-        %
-        % [내부 루프 1 시작: while true] 를 열고 매 프레임 아래를 반복합니다.
-        %
-        % 1) 중심점 (triX, triY) 기준으로 삼각형 꼭짓점 3개 좌표(3행 2열 행렬) 만들기
-        %    Screen('FillPoly', window, triColor, triPoints) 는 [x, y] 행렬을 받습니다.
-        %    - [선택지 A: 위/좌하/우하 꼭짓점을 직접 덧셈·뺄셈] (직관적이고 판정이 쉬움!)
-        %      * triPoints = [ triX,              triY - triSize/2 ; ...  % 위쪽(Y감소!)
-        %                      triX - triSize/2,  triY + triSize/2 ; ...  % 왼쪽 아래
-        %                      triX + triSize/2,  triY + triSize/2 ];     % 오른쪽 아래
-        %      * 참고: MATLAB에서 '...'은 줄이 길 때 다음 줄로 이어 쓰는 기호입니다.
-        %    - [선택지 B: 5주차 방식 (cos/sin 회전)]
-        %      * angles = linspace(0, 2*pi, 4)' - pi/2;  % 주의: 마지막 점이 첫 점과 중복됨
-        %      * angles = angles(1:3);                   % 꼭짓점 3개만 남기기
-        %      * triPoints = [triX + (triSize/2)*cos(angles), triY + (triSize/2)*sin(angles)];
-        %      * (참고 파일: 5th week/Shape_2_comment_version.m 77~83번째 줄)
-        %
-        % 2) 화면 그리기 순서 (나중에 그린 것이 위에 겹쳐집니다!)
-        %    - 배경 칠하기: Screen('FillRect', window, gray);
-        %    - 특정 영역 그리기: Screen('FillRect', window, targetColor, targetRect);
-        %    - 삼각형 그리기: Screen('FillPoly', window, triColor, triPoints);
-        %    - 안내 문구(시행 번호 등): DrawFormattedText(window, sprintf('Trial %d / %d', trial, totalTrials), 40, 40, white);
-        %    - 모니터 출력: Screen('Flip', window);
-        % -----------------------------------------------------------------
+        % [TODO 3 - 완료] 삼각형(왼쪽) & 특정 영역(오른쪽 중앙) 초기 위치 설정
+        triX = 150;
+        triY = centerY;
+        targetX = randi([round(centerX), screenWidth - 150]);
+        targetY = centerY;
 
-        % -----------------------------------------------------------------
-        % [TODO 5] (내부 루프 1: 이동 구간) 키보드로 움직이기 & 스페이스바 탈출
-        %
-        % ★ [PTB3 공식 데모 참고: KbDemo.m (open KbDemo 입력 -> KbDemoPart4 함수 참고)]
-        %   - 216~248번째 줄: 실시간 키보드 입력 제어의 공식 바이블 코드입니다!
-        %     while 루프 안에서 [keyIsDown, ~, keyCode] = KbCheck; 로 키를 읽고,
-        %     방향키에 따라 좌표를 갱신한 뒤 Screen('Flip')으로 다시 그리는 구조입니다. 이거 참고해서 하세요!
-        %
-        % - [선택지 A: KbCheck로 누르고 있는 동안 부드럽게 연속 이동] (추천)
-        %   * [keyIsDown, ~, keyCode] = KbCheck;
-        %   * 설명: keyCode는 모든 키의 눌림 여부(0 또는 1)를 담은 배열입니다.
-        %   * keyIsDown이 참일 때 아래처럼 독립된 if문 4개를 쓰면 대각선 이동도 됩니다:
-        %       if keyCode(leftKey),  triX = triX - moveSpeed; end
-        %       if keyCode(rightKey), triX = triX + moveSpeed; end
-        %       if keyCode(upKey),    triY = triY - moveSpeed; end   % 화면 위쪽은 -Y!
-        %       if keyCode(downKey),  triY = triY + moveSpeed; end   % 화면 아래쪽은 +Y!
-        %   * 화면 밖으로 나가지 않게 제한(Clamping):
-        %       triX = max(triSize/2, min(screenWidth  - triSize/2, triX));
-        %       triY = max(triSize/2, min(screenHeight - triSize/2, triY));
-        %   * 스페이스바를 누르면 이동 루프 종료:
-        %       if keyCode(spaceKey)
-        %           KbReleaseWait;   % ★ 핵심! 손가락을 뗄 때까지 기다려야
-        %           break;           %    바로 뒤 TODO 7 대기 루프가 한 번에 뚫리지 않습니다!
-        %       end
-        %   * ESC 키 종료 처리:
-        %       if keyCode(escKey), error('사용자에 의해 중단되었습니다.'); end
-        %       (또는 aborted = true; break; 후 바깥 for문도 탈출)
-        %
-        % - [선택지 B: 한 번 누를 때마다 1칸씩 딱딱 움직이기]
-        %   * 각 방향키 처리 끝에 KbReleaseWait를 넣으면 1회 누름 = 1회 이동이 됩니다.
-        %   * 단, 이동 후 즉시 손을 떼야 하므로 손가락이 아플 수 있어 선택지 A를 권장합니다.
-        % -----------------------------------------------------------------
+        % 중심 (targetX, targetY)에 맞춰 [Left, Top, Right, Bottom] 사각형 좌표 생성
+        targetRect = CenterRectOnPointd([0, 0, targetWidth, targetHeight], targetX, targetY);
 
-        % -----------------------------------------------------------------
-        % [TODO 6] (이동 루프 탈출 직후) 삼각형이 특정 영역에 들어갔는지 판정하기
-        %
-        % ★ [PTB3 공식 함수 참고: IsInRect (help IsInRect)]
-        %   - inside = IsInRect(x, y, rect); 로 점이 사각형 안에 있는지 1줄로 검사 가능합니다. 이거 참고해서 하세요!
-        %
-        % 연구 설계에 따라 "들어갔다"의 기준을 고르세요:
-        % - [선택지 A: 삼각형 꼭짓점 3개가 전부 사각형 영역 안에 들어와야 인정] (엄격/정확)
-        %   * targetRect는 [Left, Top, Right, Bottom] 즉 (1)=L, (2)=T, (3)=R, (4)=B 입니다.
-        %   * triPoints(:, 1) 은 꼭짓점 3개의 X좌표 전부, triPoints(:, 2) 는 Y좌표 전부입니다.
-        %   * all(...) 함수는 배열의 모든 값이 참일 때만 true를 반환합니다:
-        %     isInside = all(triPoints(:,1) >= targetRect(1) & ...
-        %                    triPoints(:,1) <= targetRect(3) & ...
-        %                    triPoints(:,2) >= targetRect(2) & ...
-        %                    triPoints(:,2) <= targetRect(4));
-        %     % (또는 PTB 함수 활용: isInside = all(IsInRect(triPoints(:,1), triPoints(:,2), targetRect));)
-        %
-        % - [선택지 B: 삼각형 중심점 (triX, triY)만 사각형 안에 있으면 인정] (간단)
-        %   * PTB 내장함수 한 줄로 끝납니다:
-        %     isInside = IsInRect(triX, triY, targetRect);
-        %
-        % - [선택지 C: 특정 영역이 원 또는 삼각형(다각형)인 경우]
-        %   * 원 영역: hypot(triX - tx, triY - ty) <= targetRadius  (두 점 사이 거리 <= 반지름)
-        %   * 다각형 영역: all(inpolygon(triPoints(:,1), triPoints(:,2), targetPoly(:,1), targetPoly(:,2)))
-        %
-        % 판정 결과를 문자열로 변환:
-        %   if isInside, resultText = 'correct'; else, resultText = 'wrong'; end
-        % -----------------------------------------------------------------
+        % (나중에 복습용) cos/sin으로 오른쪽 향하는 삼각형(▶) 만들기:
+        %   angles = [0; 2*pi/3; 4*pi/3];
+        %   triPoints = [triX + (TriSize/2)*cos(angles), triY + (TriSize/2)*sin(angles)];
 
-        % -----------------------------------------------------------------
-        % [TODO 7] (내부 루프 2) correct/wrong 표시 후 오직 스페이스 키로만 넘어가기
-        %
-        % 요구사항: "correct/wrong이 뜨도록... 다시 스페이스 키 누르면 다음 시행
-        %            (다른 키 누르면 반응 없어야 함)"
-        %
-        % ★ [PTB3 공식 데모 참고: MullerLyerIllusion.m & DrawFormattedTextDemo.m]
-        %   - MullerLyerIllusion.m 330~333번째 줄:
-        %       DrawFormattedText(expWin, 'Press any key to start next trial', 'center', 'center');
-        %       Screen('Flip', expWin);
-        %       KbWait([], 2); % 키 입력 대기 패턴
-        %   - "다른 키 누르면 반응 없어야 함" 필수 팁 (help RestrictKeysForKbCheck):
-        %     RestrictKeysForKbCheck([spaceKey, escKey]) 를 호출하면 스페이스와 ESC 외의 키는 아예 무시됩니다!
-        %     이거 참고해서 대기 루프를 만드세요! (루프 탈출 후 RestrictKeysForKbCheck([]) 해제 필수!)
-        %
-        % 1) 먼저 배경 + 영역 + 삼각형 + 결과 글자('correct' 또는 'wrong')를 화면에 띄웁니다.
-        %    - 팁: correct면 초록색 [0, 255, 0], wrong이면 빨간색 [255, 0, 0]으로 주면 직관적입니다.
-        %    - DrawFormattedText(window, [resultText, '\n\nPress SPACE for next trial'], 'center', 'center', msgColor);
-        %    - Screen('Flip', window);
-        %
-        % 2) 오직 스페이스바만 반응하게 기다리는 선택지
-        %    - [선택지 A: RestrictKeysForKbCheck로 허용 키를 아예 잠그기] (가장 깔끔!)
-        %      * RestrictKeysForKbCheck([spaceKey, escKey]);  % 이제 다른 키는 아예 무시됨!
-        %      * while true
-        %            [~, ~, keyCode] = KbCheck;
-        %            if keyCode(spaceKey)
-        %                KbReleaseWait;   % 손 뗄 때까지 대기 (다음 시행 오작동 방지)
-        %                break;
-        %            elseif keyCode(escKey)
-        %                error('사용자에 의해 중단되었습니다.');
-        %            end
-        %        end
-        %      * RestrictKeysForKbCheck([]);  % ★ 필수! 루프 나오자마자 잠금 해제해야 다음 시행 방향키가 작동!
-        %      * (참고 파일: 7th week/Week_7th.m 34, 78번째 줄)
-        %
-        %    - [선택지 B: 잠금 없이 if문으로 spaceKey / escKey만 걸러내기]
-        %      * RestrictKeysForKbCheck 없이 while true 안에서
-        %        if keyCode(spaceKey) ... elseif keyCode(escKey) ... 만 검사
-        %      * 나머지 키를 눌렀을 때는 아무 코드도 실행하지 않으므로 반응이 없습니다.
-        % -----------------------------------------------------------------
+        % [내부 루프 1] 키보드를 누를수록 삼각형이 점점 오른쪽으로 이동
+        while true
+            % [TODO 4 - 완료]
+            triPoints = [triX - TriSize/2, triY - TriSize/2; % 왼쪽 위
+                triX - TriSize/2, triY + TriSize/2;  % 왼쪽 아래
+                triX + TriSize/2, triY];         % 오른쪽 끝
 
-        % -----------------------------------------------------------------
-        % [TODO 8-1] (시행 끝) 데이터 1줄 기록하기 & 절반 시행 지나면 휴식 시간 주기
-        %
-        % ★ [PTB3 공식 데모 참고: MullerLyerIllusion.m (open MullerLyerIllusion)]
-        %   - 97~100번째 줄 & 322번째 줄:
-        %     전체 시행 루프 for i = 1:ntrials 안에서 results(i, :) = [ ... ] 로 데이터를 1줄씩 차곡차곡 쌓는 패턴!
-        %     이거 참고해서 매 시행 결과를 results에 기록하세요!
-        %
-        % 1) 이번 시행의 [최종 삼각형 위치, 특정 영역 위치, 결과]를 results에 저장
-        %    - 선택지 A(Cell Array) 사용 시 한 줄 예시 (중괄호 {} 주의!):
-        %      results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
-        %    - 설명: results(trial, :) = { ... } 는 trial번째 행 전체에 숫자들과 글자를 한 번에 채웁니다.
-        %
-        % 2) 시행의 절반이 지났을 때 휴식 시간 부여 (TODO 1의 restTrial 변수 활용)
-        %    if trial == restTrial && trial < totalTrials
-        %        - [선택지 A: 정해진 시간(예: 5초) 카운트다운 자동 휴식]
-        %          * for sec = 5:-1:1   % 5, 4, 3, 2, 1 순서로 1씩 감소
-        %                Screen('FillRect', window, gray);
-        %                DrawFormattedText(window, sprintf('Break Time: %d sec', sec), 'center', 'center', white);
-        %                Screen('Flip', window);
-        %                WaitSecs(1);
-        %            end
-        %          * (참고 파일: 6th week/Week_6th.m 153~160번째 줄)
-        %        - [선택지 B: 충분히 쉰 뒤 스페이스 키를 눌러 직접 재개]
-        %          * 안내 문구 띄우고 Screen('Flip', window) 후 스페이스바 입력 + KbReleaseWait 대기
-        %    end
-        % -----------------------------------------------------------------
+            Screen('FillRect', window, gray);                             % 배경
+            Screen('FillRect', window, targetFillColor, targetRect);      % 반투명 영역
+            Screen('FrameRect', window, targetBorderColor, targetRect, 3);% 테두리 (두께 3px)
+            Screen('FillPoly', window, TriColor, triPoints);              % 삼각형
 
-        % === [보일러플레이트 기본 대기 루프: 위 TODO 구현 시 for trial 루프로 교체하세요] ===
-        % 1. 화면 버퍼 초기화 (배경 칠하기)
-        Screen('FillRect', window, gray);
+            DrawFormattedText(window, sprintf('Trial %d/%d', trial, totalTrials), 40, 40, white);
+            Screen('Flip', window); % 화면에 출력
 
-        % 2. 도형 / 선 / 텍스트 그리기
-        DrawFormattedText(window, 'Press ESC to Exit', 'center', centerY, white);
+            % [TODO 5 - 완료] 키보드 입력 처리 (이동 / 제출 / 중단)
+            [keyIsDown, ~, keyCode] = KbCheck;
 
-        % 3. 그린 요소를 실제 화면으로 전환(Flip)
-        Screen('Flip', window);
-
-        % 4. ESC 키 강제 종료 확인
-        [pressed, firstPress] = KbQueueCheck;
-        if pressed && firstPress(KbName('ESCAPE'))
-            break;
+            if keyCode(rightKey)
+                % 화면 끝(screenWidth - TriSize/2)을 넘지 않도록 두 값 중 작은 값(min) 선택
+                triX = min(screenWidth - TriSize/2, triX + TrimoveSpeed);
+                KbReleaseWait; % 1번 누름 = 1칸 이동
+            end
+            if keyCode(spaceKey)
+                KbReleaseWait; % 스페이스에서 손 뗄 때까지 대기 (다음 루프 오작동 방지)
+                break;         % 내부 루프 1 탈출 -> 아래 [TODO 6]으로 이동
+            end
+            if keyCode(escKey)
+                error('사용자에 의해 중단되었습니다'); % catch 블록으로 이동해 창 닫고 종료
+            end
         end
 
-        % 5. 프레임/타이머 대기 (필요 시 조절)
-        WaitSecs(0.05);
+        % [TODO 6 - 완료] 영역 안/밖 판정 ('correct' or 'wrong')
+        % IsInRect: triX가 Left~Right 사이, triY가 Top~Bottom 사이인지 한 번에 검사 (안=1, 밖=0)
+        isInside = IsInRect(triX, triY, targetRect);
+
+        if isInside
+            resultText = 'correct';
+        else
+            resultText = 'wrong';
+        end
+
+        % [내부 루프 2 - 완료] 결과 표시 후 오직 스페이스 키로만 다음 시행 넘어가기
+        RestrictKeysForKbCheck([spaceKey, escKey]);
+        while true
+            DrawFormattedText(window, resultText, 'center', 'center', white);
+            Screen('Flip', window);
+
+            [keyIsDown, ~, keyCode] = KbCheck;
+            if keyCode(escKey)
+                error('사용자에 의해 중단되었습니다');
+            end
+            if keyCode(spaceKey)
+                KbReleaseWait;
+                break; % 내부 루프 2만 탈출 -> 아래 결과 기록으로 이동
+            end
+        end
+        RestrictKeysForKbCheck([]);
+
+        % [TODO 8-1 - 기록 완료 / 휴식 버그 2개 수정 필요]
+        results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
+        
+        if trial == restTrials && trial < totalTrials
+            % [버그 1] center -> 'center', 'center' (작은따옴표 없으면 변수로 인식해 에러!)
+            DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
+            Screen('Flip', window);
+
+            % [버그 2] 여기를 while true ... end 로 감싸야 스페이스바 누를 때까지 기다립니다!
+            %          (while 없이 break;를 쓰면 바깥 for trial 루프 자체가 끝나버립니다!)
+            % 수정완. 확인 부탁함 
+
+            while true
+                [keyIsDown, ~, keyCode] = KbCheck;
+                if keyCode(escKey)
+                    error('사용자에 의해 중단되었습니다');
+                end
+                if keyCode(spaceKey)
+                    KbReleaseWait;
+                    break;
+                end
+            end
+        end
     end
 
-    %% [Part 4] 결과 저장 (메모장 또는 엑셀 파일 내보내기)
-    % ---------------------------------------------------------------------
-    % [TODO 8-2] 저장된 results를 엑셀 또는 메모장으로 파일 출력하기
-    %
-    % ★ [PTB3 공식 데모 참고: MullerLyerIllusion.m (open MullerLyerIllusion)]
-    %   - 337번째 줄: dlmwrite(fileName, results, 'delimiter', ','); 로 파일 출력하는 공식 예제.
-    %   - 현대 MATLAB에서는 테이블 변환 후 writetable(resultTable, 'week8_result.csv') 방식이
-    %     열 이름(Header)까지 함께 저장되고 엑셀과 메모장 모두에서 바로 열리므로 가장 권장됩니다.
-    %
-    % - [선택지 A: writetable로 CSV 또는 엑셀(.xlsx) 저장] (가장 간단, 추천!)
-    %   * 열 이름 정의:
-    %     colNames = {'Trial', 'FinalTriX', 'FinalTriY', 'TargetL', 'TargetT', 'TargetR', 'TargetB', 'Result'};
-    %   * 셀 배열을 MATLAB Table로 변환 후 파일로 쓰기:
-    %     resultTable = cell2table(results, 'VariableNames', colNames);
-    %     writetable(resultTable, 'week8_result.csv');   % 메모장과 엑셀 둘 다 바로 열림!
-    %     % (진짜 엑셀 전용 포맷을 원하면 확장자만 'week8_result.xlsx'로 바꾸면 됩니다.)
-    %   * (참고 파일: 6th week/Week_6th.m 189~197번째 줄)
-    %
-    % - [선택지 B: fopen + fprintf로 메모장(.txt)에 직접 줄 단위 쓰기]
-    %   * fid = fopen('week8_result.txt', 'w');
-    %   * fprintf(fid, 'Trial\tFinalTriX\tFinalTriY\tTargetL\tTargetT\tTargetR\tTargetB\tResult\n');
-    %   * for i = 1:size(results, 1)
-    %         fprintf(fid, '%d\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%s\n', results{i, :});
-    %     end
-    %   * fclose(fid);
-    %   * 설명: results{i, :} 처럼 중괄호를 쓰면 i번째 행의 모든 칸이 순서대로 펼쳐져 들어갑니다!
-    %   * (참고 파일: 6th week/Week_6th_KeyMouse.m 72~73, 214~219번째 줄)
-    % ---------------------------------------------------------------------
+    %% [Part 4] 결과 저장 (CSV 파일 내보내기)
+    % [TODO 8-2 - 완료]
+    colNames = {'Trial', 'FinalTriX', 'FinalTriY', 'TargetL', 'TargetT', 'TargetR', 'TargetB', 'Result'};
+    resultTable = cell2table(results, 'VariableNames', colNames);
+    writetable(resultTable, 'week8_result.csv');
+    % (선택) 매번 덮어쓰기 방지를 원할 때:
+    %   timeStr = string(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
+    %   writetable(resultTable, sprintf('week8_result_%s.csv', timeStr));
 
     %% [Part 5] 정상 종료 및 자원 해제
     RestrictKeysForKbCheck([]);

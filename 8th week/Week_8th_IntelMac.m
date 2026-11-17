@@ -175,17 +175,12 @@ try
         end
         RestrictKeysForKbCheck([]);
 
-        % [TODO 8-1 - 기록 완료 / 휴식 버그 2개 수정 필요]
+        % [TODO 8-1 - 완료] 이번 시행 결과 기록 및 절반 지점 휴식
         results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
         
         if trial == restTrials && trial < totalTrials
-            % [버그 1] center -> 'center', 'center' (작은따옴표 없으면 변수로 인식해 에러!)
             DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
             Screen('Flip', window);
-
-            % [버그 2] 여기를 while true ... end 로 감싸야 스페이스바 누를 때까지 기다립니다!
-            %          (while 없이 break;를 쓰면 바깥 for trial 루프 자체가 끝나버립니다!)
-            % 수정완. 확인 부탁함 
 
             while true
                 [keyIsDown, ~, keyCode] = KbCheck;

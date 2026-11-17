@@ -75,9 +75,9 @@ try
     %         open MullerLyerIllusion (시행 루프·결과 저장) | help IsInRect (영역 판정)
 
     %% [Part 2] 실험 설정 및 변수 정의
-    % [TODO 1 - 완료] 시행 횟수 및 절반 휴식 타이밍 (홀수 대비 시 floor 권장)
+    % [TODO 1 - 수정 힌트] totalTrials가 홀수(예: 11)일 때 5.5가 되어 아래 if문에 안 걸립니다 -> floor(...)로 내림 처리해 보세요!
     totalTrials = 10;
-    restTrials = totalTrials / 2;
+    restTrials = floor(totalTrials / 2);
     
     % [TODO 2 - 완료] 키 코드, 삼각형/특정 영역 속성, 결과 배열 선언
     leftKey = KbName('LeftArrow'); 

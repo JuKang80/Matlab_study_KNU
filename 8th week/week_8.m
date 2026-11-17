@@ -35,7 +35,7 @@ try
     [centerX, centerY] = RectCenter(windowRect);
 
     totalTrials = 10;
-    restTrials = totalTrials / 2;
+    restTrials = floor(totalTrials / 2);
 
     leftKey = KbName('LeftArrow');
     rightKey = KbName('RightArrow');

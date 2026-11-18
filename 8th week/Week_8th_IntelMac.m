@@ -76,6 +76,9 @@ try
 
     %% [Part 2] 실험 설정 및 변수 정의
     % [TODO 1 - 완료] 시행 횟수 및 절반 휴식 타이밍 (홀수 대비 시 floor 권장)
+    % [힌트 - 개선] totalTrials를 홀수(예: 7)로 바꾸면 restTrials가 3.5가 되어
+    %   아래 `trial == restTrials` 조건이 절대 참이 되지 않습니다.
+    %   `restTrials = floor(totalTrials / 2);` 로 바꾸면 홀수에서도 안전하게 동작합니다.
     totalTrials = 10;
     restTrials = totalTrials / 2;
     
@@ -101,6 +104,9 @@ try
     results = cell(totalTrials, 8);
 
     %% [Part 3] 메인 실험 루프
+    % [힌트 - 사용자 친화성] 실험이 바로 시작되면 참가자가 당황할 수 있으므로,
+    %   for 루프 직전에 시작 안내 화면('Press SPACE to start')을 띄우고
+    %   RestrictKeysForKbCheck([spaceKey, escKey]) + KbReleaseWait로 시작 대기 화면을 추가해 보세요.
     for trial = 1:totalTrials
 
         % [TODO 3 - 완료] 삼각형(왼쪽) & 특정 영역(오른쪽 중앙) 초기 위치 설정
@@ -132,24 +138,39 @@ try
             Screen('Flip', window); % 화면에 출력
 
             % [TODO 5 - 완료] 키보드 입력 처리 (이동 / 제출 / 중단)
+            % [힌트 - 이동/판정 개선 1] 현재 rightKey만 구현되어 있어 타겟 영역을 지나치면 뒤로 돌아갈 수 없습니다.
+            %   선언해 둔 leftKey(필요 시 upKey/downKey도) 이동 로직을 추가해 보세요:
+            %   예) if keyCode(leftKey), triX = max(TriSize/2, triX - TrimoveSpeed); KbReleaseWait; end
+            % [힌트 - 이동/판정 개선 2] 같은 프레임에서 방향키와 spaceKey를 동시에 누르면
+            %   triX는 바뀌었지만 triPoints는 이전 프레임 값인 상태로 break되어 판정이 1프레임 어긋날 수 있습니다.
+            %   spaceKey 분기를 `elseif`로 분리하거나, 루프 탈출 직후 triPoints를 다시 계산하면 안전합니다.
             [keyIsDown, ~, keyCode] = KbCheck;
 
             if keyCode(rightKey)
                 % 화면 끝(screenWidth - TriSize/2)을 넘지 않도록 두 값 중 작은 값(min) 선택
                 triX = min(screenWidth - TriSize/2, triX + TrimoveSpeed);
-                KbReleaseWait; % 1번 누름 = 1칸 이동
+                KbReleaseWait; % 1번 누름 = 1칸 이동 (꾹 눌러 연속 이동을 원하면 KbReleaseWait 제거 고려)
             end
             if keyCode(spaceKey)
                 KbReleaseWait; % 스페이스에서 손 뗄 때까지 대기 (다음 루프 오작동 방지)
                 break;         % 내부 루프 1 탈출 -> 아래 [TODO 6]으로 이동
             end
             if keyCode(escKey)
+                % [힌트 - 중도 종료] error() 대신 `aborted = true; break;` 플래그로 바깥 for문까지 탈출하면,
+                %   중간까지 진행한 results(1:completedTrials, :)를 버리지 않고 저장할 수 있습니다.
                 error('사용자에 의해 중단되었습니다'); % catch 블록으로 이동해 창 닫고 종료
             end
         end
 
         % [TODO 6 - 완료] 영역 안/밖 판정 ('correct' or 'wrong')
         % IsInRect: triX가 Left~Right 사이, triY가 Top~Bottom 사이인지 한 번에 검사 (안=1, 밖=0)
+        % [힌트 - 판정 이상함 핵심 원인!]
+        %   IsInRect(triX, triY, targetRect)는 삼각형 '중심점 1개'만 검사합니다.
+        %   그래서 삼각형 꼭짓점이 영역 밖으로 삐져나가도 correct가 되거나,
+        %   삼각형이 꽤 들어갔는데 중심점이 못 미쳐 wrong이 뜨는 어색한 판정이 발생합니다.
+        %   삼각형 전체가 들어왔을 때만 correct로 하려면 triPoints를 최신화한 뒤 꼭짓점 3개를 모두 검사하세요:
+        %   isInside = all(triPoints(:,1) >= targetRect(1) & triPoints(:,1) <= targetRect(3) & ...
+        %                  triPoints(:,2) >= targetRect(2) & triPoints(:,2) <= targetRect(4));
         isInside = IsInRect(triX, triY, targetRect);
 
         if isInside
@@ -159,6 +180,12 @@ try
         end
 
         % [내부 루프 2 - 완료] 결과 표시 후 오직 스페이스 키로만 다음 시행 넘어가기
+        % [힌트 - 사용자 친화성 & 판정 확인]
+        %   1) 현재는 resultText만 그려서 방금 삼각형이 영역 안에 있었는지 눈으로 확인하기 어렵습니다.
+        %      배경 + targetRect + triPoints를 함께 그린 뒤 결과 문구를 띄워주면 왜 correct/wrong인지 바로 알 수 있습니다.
+        %   2) [resultText, '\n\nPress SPACE for next trial'] 처럼 다음 행동을 안내하고,
+        %      correct([0 255 0]) / wrong([255 0 0])에 따라 글자 색상을 다르게 주면 훨씬 직관적입니다.
+        %   3) 화면 내용이 고정이라면 Screen('Flip', window)는 while true 진입 전에 한 번만 호출해도 됩니다.
         RestrictKeysForKbCheck([spaceKey, escKey]);
         while true
             DrawFormattedText(window, resultText, 'center', 'center', white);
@@ -180,6 +207,10 @@ try
         
         if trial == restTrials && trial < totalTrials
             % [버그 1] center -> 'center', 'center' (작은따옴표 없으면 변수로 인식해 에러!)
+            % [힌트 - 사용자 친화성 & 키 제한 일관성]
+            %   1) 휴식 대기 루프에도 RestrictKeysForKbCheck([spaceKey, escKey]) / RestrictKeysForKbCheck([])를
+            %      감싸주면 다른 키를 실수로 눌러도 무시되도록 통일할 수 있습니다.
+            %   2) 최소 휴식 시간(예: 5초 카운트다운) 후 'Press SPACE to continue'를 띄우는 방식도 좋습니다.
             DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
             Screen('Flip', window);
 
@@ -208,10 +239,12 @@ try
     % (선택) 매번 덮어쓰기 방지를 원할 때:
     %   timeStr = string(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
     %   writetable(resultTable, sprintf('week8_result_%s.csv', timeStr));
+    % [힌트 - 사용자 친화성] 파일 저장 후 'Experiment Complete! Press SPACE to exit' 안내 화면을
+    %   잠시 띄워주면 참가자가 실험이 정상 종료되었음을 명확히 알 수 있습니다.
 
     %% [Part 5] 정상 종료 및 자원 해제
     RestrictKeysForKbCheck([]);
-    KbQueueRelease;
+    KbQueueRelease; % [힌트] 현재 코드에서는 KbCheck만 사용하고 KbQueueCreate를 쓰지 않으므로 생략 가능합니다.
     sca;
     ShowCursor;
     disp('Experiment successfully finished');

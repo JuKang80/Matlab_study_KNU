@@ -78,6 +78,23 @@ try
     KbReleaseWait;
 
     %% [Part 3] 메인 실험 루프
+
+    DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
+    screen('Flip', window);
+    RestrictKeysForKbCheck([spaceKey, escKey]);
+    while true
+        [keyIsDown, ~, keyCode] = KbCheck; % 이거 처음에 키가 눌렸는지도 검사해야 하지 않니? 단순히 어떤 키가 만약 1(눌려졌으면, 근데 여기선 구체적으로 스페이스바와 esc로만 제한함)이면 걍 그 다음 if문에서 뭐 처리가 되는건가 
+        if keyCode(escKey)
+            error('사용자에 의해 중단되었습니다.');
+        end
+        if keyCode(spaceKey)
+            KbReleaseWait;
+            break;
+        end
+    if keyCode(escKey) % 왜 또 필요하지? 없어도 되지않나? 중복되는 느낌인데 
+        error('사용자에 의해 중단되었습니다.');
+    end
+    RestrictKeysForKbCheck([]);
     % [추가 구현 #1] 실험 시작 안내 화면 ('Press SPACE to start') — 5단계 구현 힌트
     %   목표: 실행하자마자 1회차가 시작되지 않도록 안내 문구를 띄우고 스페이스 입력을 기다린 뒤 시작
     %   1단계 (안내 문구 1회 출력): for문 위에서 글자를 그리고 Flip (고정 화면이라 while 밖에서 1번만!)
@@ -129,7 +146,7 @@ try
                 KbReleaseWait;
             end
             % [수정 필요 #2] 아래 줄 끝 세미콜론(;)은 불필요하므로 제거하면 깔끔함 (`if keyCode(leftKey)`)
-            if keyCode(leftKey);
+            if keyCode(leftKey)
                 triX = max(TriSize/2, triX - TrimoveSpeed); 
                 KbReleaseWait;
             end
@@ -158,7 +175,10 @@ try
         % - [방법 1: 중심점 기준 (현재 코드)] 삼각형 중심(triX, triY)만 들어가면 정답 (1줄)
         %   isInside = IsInRect(triX, triY, targetRect);
         %
-        % - [방법 2-A: ★초간단 부분 진입 (추천)] 꼭짓점 3개 중 1개라도 들어오면 정답 ('||' = 또는)
+        isInside = IsInRect(triX - TriSize/2, triY - TriSize/2, targetRect) || ...
+            IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ...
+            IsInRect(triX + TriSize/2, triY, targetRect);
+        %  [방법 2-A: ★초간단 부분 진입 (추천)] 꼭짓점 3개 중 1개라도 들어오면 정답 ('||' = 또는)
         %   새 문법(행렬 슬라이싱/any/polyshape) 없이 이미 아는 IsInRect만 꼭짓점 3개에 각각 쓰면 끝!
         %   isInside = IsInRect(triX - TriSize/2, triY - TriSize/2, targetRect) || ... % 왼쪽 위 꼭짓점
         %              IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ... % 왼쪽 아래 꼭짓점
@@ -202,9 +222,8 @@ try
         %       DrawFormattedText(window, msg, 'center', 'center', resultColor);
         %   3단계 (딱 1번 Flip): [수정 필요 #1]과 함께 Screen('Flip', window);를 while 밖(글자 바로 아래)으로 빼기!
         DrawFormattedText(window, resultText, 'center', 'center', white);
+        Screen('Flip', window);
         while true
-            Screen('Flip', window);
-
             [keyIsDown, ~, keyCode] = KbCheck;
             if keyCode(escKey)
                 error('사용자에 의해 중단되었습니다');
@@ -219,6 +238,7 @@ try
         % 결과 기록 & 절반 지점 휴식
         results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
 
+        RestrictKeysForKbCheck([spaceKey, escKey]);
         if trial == restTrials && trial < totalTrials
             % [수정 필요 #3] 위 결과 대기 루프처럼 앞뒤를 `RestrictKeysForKbCheck([spaceKey, escKey]);`와
             %   `RestrictKeysForKbCheck([]);`로 감싸면 휴식 중 다른 키 입력을 일관되게 무시할 수 있습니다.
@@ -236,6 +256,7 @@ try
                 end
             end
         end
+        RestrictKeysForKbCheck([]);
     end
 
     %% [Part 4] 결과 저장 (피험자 데이터 덮어쓰기 방지)

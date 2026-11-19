@@ -102,12 +102,15 @@ try
             end
             if keyCode(leftKey);
                 triX = max(TriSize/2, triX - TrimoveSpeed); 
+                KbReleaseWait;
             end
             if keyCode(upKey)
                 triY = max(TriSize/2, triY - TrimoveSpeed);
+                KbReleaseWait;
             end
             if keyCode(downKey)
                 triY = min(screenHeight - TriSize/2, triY + TrimoveSpeed);
+                KbReleaseWait;
             end
             
 
@@ -142,11 +145,10 @@ try
         % [매트랩다운 개선 팁 2] RestrictKeysForKbCheck로 키를 잠갔다면, while true 대신
         %   KbWait([], 2); [~, ~, keyCode] = KbCheck; if keyCode(escKey), error(...); end
         %   로 줄일 수 있습니다. (아래 Break Time 대기 루프도 동일!)
-        키 잠궜다면 while true대신 사용할수있다는거 이해못함 
+        
         RestrictKeysForKbCheck([spaceKey, escKey]);
         DrawFormattedText(window, resultText, 'center', 'center', white);
         while true
-            DrawFormattedText(window, resultText, 'center', 'center', white);
             Screen('Flip', window);
 
             [keyIsDown, ~, keyCode] = KbCheck;

@@ -49,11 +49,12 @@ try
     escKey = KbName('ESCAPE');
 
     TriSize = 60;
-    TrimoveSpeed = 8; % [팁] 꾹 누르는 연속 이동으로 바꿀 거면 8 유지, 1회 누름 이동이면 30~40 권장
+    TrimoveSpeed = 50; % 한번 눌렀을 때 움직이는 거리
     TriColor = [255, 255, 255];
+    % 색 랜덤을 원한다면 for문 초반에 TriColor = randi([0, 255], 1, 3); 집어넣기
 
-    targetFillColor = [0, 220, 120, 80];
-    targetBorderColor = [0, 220, 120, 255];
+    targetFillColor = [0, 220, 120, 80]; % 타겟의 색 지정. 이 대괄호 안의 파라미터가 각각 R, G, B, Alpha인데, 마지막 값이 0이면 완전 투명이고 255면 완전 불투명이다. 
+    targetBorderColor = [0, 220, 120, 255]; % 테두리 색 자체는 선명하게 하였다. 
     targetWidth = 180;
     targetHeight = 180;
 
@@ -64,6 +65,7 @@ try
 
     %% [Part 3] 메인 실험 루프
     for trial = 1:totalTrials
+        KbReleaseWait; 
         % [경계 조건 힌트] 매 시행 시작 시에도 이전 키 눌림 잔여(Carryover) 방지: KbReleaseWait;
         % [반응시간(RT) 아이디어 메모 - 구현은 선택]
         %   루프 1 직전에 startTime = GetSecs; 를 찍고, spaceKey 누를 때 rt = GetSecs - startTime; 으로 측정 가능
@@ -73,7 +75,8 @@ try
         triX = 150;
         triY = centerY;
         targetX = randi([round(centerX), screenWidth - 150]);
-        targetY = centerY;
+        targetY = randi([150, screenHeight - 150]); 
+        % targetY = centerY;
 
         targetRect = CenterRectOnPointd([0, 0, targetWidth, targetHeight], targetX, targetY);
 
@@ -95,26 +98,18 @@ try
 
             if keyCode(rightKey)
                 triX = min(screenWidth - TriSize/2, triX + TrimoveSpeed);
-                KbReleaseWait; % [팁] 누르고 있는 동안 부드럽게 움직이려면 KbReleaseWait; 를 지워보세요!
+                KbReleaseWait;
             end
-
-            % -------------------------------------------------------------
-            % [TODO B] leftKey, upKey, downKey 이동 직접 구현하기
-            % 1) 왼쪽(leftKey): X가 줄어듦 (-). 왼쪽 벽(TriSize/2)보다 작아지면 안 되므로 max 사용!
-            %    if keyCode(leftKey)
-            %        triX = max(TriSize/2, triX - TrimoveSpeed);
-            %    end
-            % 2) 위쪽(upKey): 화면 좌표는 위로 갈수록 Y가 작아짐(-)! 위쪽 벽(TriSize/2) 제한:
-            %    if keyCode(upKey)
-            %        triY = max(TriSize/2, triY - TrimoveSpeed);
-            %    end
-            % 3) 아래쪽(downKey): 아래로 갈수록 Y가 커짐(+)! 아래쪽 벽(screenHeight - TriSize/2) 제한:
-            %    if keyCode(downKey)
-            %        triY = min(screenHeight - TriSize/2, triY + TrimoveSpeed);
-            %    end
-            % (* 주의: 대각선 이동도 되게 하려면 elseif 말고 독립된 if문으로 나란히 쓰세요!)
-            % -------------------------------------------------------------
-
+            if keyCode(leftKey);
+                triX = max(TriSize/2, triX - TrimoveSpeed); 
+            end
+            if keyCode(upKey)
+                triY = max(TriSize/2, triY - TrimoveSpeed);
+            end
+            if keyCode(downKey)
+                triY = min(screenHeight - TriSize/2, triY + TrimoveSpeed);
+            end
+            
 
             if keyCode(spaceKey)
                 KbReleaseWait;
@@ -147,7 +142,9 @@ try
         % [매트랩다운 개선 팁 2] RestrictKeysForKbCheck로 키를 잠갔다면, while true 대신
         %   KbWait([], 2); [~, ~, keyCode] = KbCheck; if keyCode(escKey), error(...); end
         %   로 줄일 수 있습니다. (아래 Break Time 대기 루프도 동일!)
+        키 잠궜다면 while true대신 사용할수있다는거 이해못함 
         RestrictKeysForKbCheck([spaceKey, escKey]);
+        DrawFormattedText(window, resultText, 'center', 'center', white);
         while true
             DrawFormattedText(window, resultText, 'center', 'center', white);
             Screen('Flip', window);
@@ -195,7 +192,9 @@ try
     %    fileName = sprintf('week8_result_%s.csv', timeStr);
     % 3) 아래 writetable의 두 번째 인수를 'week8_result.csv' 대신 fileName 으로 바꾸세요!
     % ---------------------------------------------------------------------
-    writetable(resultTable, 'week8_result.csv');
+    timeStr = string(datetime('now','Format','yyyyMMdd_HHmmss'));
+    fileName = sprintf('week8_result_%s.csv', timeStr);
+    writetable(resultTable, fileName);
 
     %% [Part 5] 정상 종료 및 자원 해제
     RestrictKeysForKbCheck([]);

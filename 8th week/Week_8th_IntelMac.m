@@ -69,11 +69,6 @@ try
     screenHeight = windowRect(4);
     [centerX, centerY] = RectCenter(windowRect);
 
-    %% [참고] PTB3 핵심 요약 & 공식 데모 (필요할 때 명령창에 입력)
-    % - 좌표계: 좌상단 (0,0), 오른쪽(+X), 아래쪽(+Y), 위쪽(-Y) / Rect = [L, T, R, B]
-    % - 데모: open KbDemo (키보드 이동) | open HelloShapesDemo (삼각형/사각형)
-    %         open MullerLyerIllusion (시행 루프·결과 저장) | help IsInRect (영역 판정)
-
     %% [Part 2] 실험 설정 및 변수 정의
     % [TODO 1 - 수정 힌트] totalTrials가 홀수(예: 11)일 때 5.5가 되어 아래 if문에 안 걸립니다 -> floor(...)로 내림 처리해 보세요!
     totalTrials = 10;
@@ -111,10 +106,6 @@ try
 
         % 중심 (targetX, targetY)에 맞춰 [Left, Top, Right, Bottom] 사각형 좌표 생성
         targetRect = CenterRectOnPointd([0, 0, targetWidth, targetHeight], targetX, targetY);
-
-        % (나중에 복습용) cos/sin으로 오른쪽 향하는 삼각형(▶) 만들기:
-        %   angles = [0; 2*pi/3; 4*pi/3];
-        %   triPoints = [triX + (TriSize/2)*cos(angles), triY + (TriSize/2)*sin(angles)];
 
         % [내부 루프 1] 키보드를 누를수록 삼각형이 점점 오른쪽으로 이동
         while true

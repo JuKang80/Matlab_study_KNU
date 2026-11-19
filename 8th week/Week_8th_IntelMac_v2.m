@@ -1,17 +1,16 @@
 % 8주차 확장 버전 (4방향 이동 + 피험자 데이터 덮어쓰기 방지 연습용)
 %
 % =========================================================================
-% [진행 현황 체크리스트] (실행 코드는 수정하지 않고 위치별 상태·남은 수정 사항만 표시함)
+% [진행 현황 체크리스트] (단순 오타·세미콜론 3건만 반영 / 핵심 로직 버그 1건은 직접 수정용으로 유지)
 %   [완료 ✅] 시작 화면 while true 'end' 추가 & 중복 escKey 제거,
 %             TODO A (타겟 Y 랜덤), 4방향 이동+KbReleaseWait, leftKey ';' 제거,
 %             결과 판정 3꼭짓점 || 로직, 정답/오답 resultColor 분기,
 %             결과 화면 도형 다시 그리기 + Screen('Flip') while 밖 이동,
 %             Break Time 키 제한 if 안 정리, TODO C (타임스탬프 CSV)
+%   [자동 수정 ✅] 단순 오타·세미콜론 3건 반영 완료:
+%                 (1) 'screen' -> 'Screen', (2) 'resultColor' 끝 ';', (3) 'target, FillColor' -> 'targetFillColor'
 %
-%   [수정 필요 #1] 시작 화면 'screen' 소문자 오타 -> 대문자 'Screen'으로 수정
-%   [수정 필요 #2] 결과 판정 옛 'isInside = IsInRect(triX, triY, targetRect);' 1줄 삭제/주석 처리
-%   [수정 필요 #3] 결과 화면 도형 그리기 변수명 오타: 'target, FillColor' -> 'targetFillColor'
-%   (사소한 팁) else 안 'resultColor = [255, 80, 80]' 끝에 ';' 추가 권장
+%   [수정 필요 #1] 결과 판정 옛 'isInside = IsInRect(triX, triY, targetRect);' 1줄 삭제/주석 처리 (마지막 1건!)
 % =========================================================================
 
 %% [Part 1] 기본 환경 초기화 및 인텔 맥 호환성 특화 설정
@@ -79,10 +78,9 @@ try
 
     %% [Part 3] 메인 실험 루프
 
-    % [완료 ✅] 시작 안내 화면 구조(while end, 중복 escKey 제거 포함) 잘 완성하셨습니다! 아래 1줄 오타만 고치면 완벽합니다.
+    % [완료 ✅] 시작 안내 화면 완성! ('screen' 대소문자 오타 -> 'Screen' 자동 수정 반영됨)
     DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
-    % [수정 필요 #1] ★ 대소문자 오타 (실행 에러): 'screen' -> 대문자 'Screen'으로 수정하세요!
-    screen('Flip', window);
+    Screen('Flip', window);
     RestrictKeysForKbCheck([spaceKey, escKey]);
     while true
         [keyIsDown, ~, keyCode] = KbCheck; % 이거 처음에 키가 눌렸는지도 검사해야 하지 않니? 단순히 어떤 키가 만약 1(눌려졌으면, 근데 여기선 구체적으로 스페이스바와 esc로만 제한함)이면 걍 그 다음 if문에서 뭐 처리가 되는건가 
@@ -159,29 +157,25 @@ try
         isInside = IsInRect(triX - TriSize/2, triY - TriSize/2, targetRect) || ...
             IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ...
             IsInRect(triX + TriSize/2, triY, targetRect);
-        % [수정 필요 #2] ★ 중요 버그: 아래 옛 코드가 남아 있어 위에서 구한 3점 판정 결과를 덮어쓰고 있습니다!
-        %   -> 아래 1줄(`isInside = IsInRect(triX, triY, targetRect);`)을 지우거나 맨 앞에 '%'를 붙여 주석 처리하세요.
+        % [수정 필요 #1] ★ 마지막 남은 버그: 아래 옛 코드가 위에서 구한 3점 판정 결과를 덮어쓰고 있습니다!
+        %   -> 아래 1줄(`isInside = IsInRect(triX, triY, targetRect);`)을 지우거나 맨 앞에 '%'를 붙여 주석 처리하면 완료됩니다.
         isInside = IsInRect(triX, triY, targetRect);
-        % [완료 ✅] 정답(초록)/오답(빨강) resultColor 분기 적용 완료!
-        %   (사소한 팁: 아래 else 안 `resultColor = [255, 80, 80]` 끝에도 ';'를 붙이면 명령 창에 숫자가 출력되지 않습니다)
+        % [완료 ✅] 정답(초록)/오답(빨강) resultColor 분기 적용 완료! (else 끝 ';' 누락 자동 수정 반영됨)
         if isInside
             resultColor = [0, 255, 100];
             resultText = 'correct';
         else
-            resultColor = [255, 80, 80]
+            resultColor = [255, 80, 80];
             resultText = 'wrong';
         end
 
         % [완료 ✅] Screen('Flip')를 while 밖으로 빼서 결과 글자 사라짐 버그 해결 완료! (while true + KbCheck 유지 굿!)
         RestrictKeysForKbCheck([spaceKey, escKey]);
 
-        % [완료 ✅] 결과 화면 도형 다시 그리기 + resultColor 적용 완료!
+        % [완료 ✅] 결과 화면 도형 다시 그리기 + resultColor 적용 완료! ('targetFillColor' 오타 자동 수정 반영됨)
         triPoints = [triX - TriSize/2, triY - TriSize/2; triX - TriSize/2, triY + TriSize/2; triX + TriSize/2, triY];
         Screen('FillRect', window, gray);
-        % [수정 필요 #3] ★ 변수명 오타 (실행 에러): 이전 주석 줄바꿈 때문에 변수명이 쪼개졌습니다!
-        %   -> 'target, FillColor'를 하나의 변수명 'targetFillColor'로 붙여주세요.
-        %   -> 올바른 코드: Screen('FillRect', window, targetFillColor, targetRect);
-        Screen('FillRect', window, target, FillColor, targetRect);
+        Screen('FillRect', window, targetFillColor, targetRect);
         Screen('FrameRect', window, targetBorderColor, targetRect, 3);
         Screen('FillPoly', window, TriColor, triPoints);
         DrawFormattedText(window, resultText, 'center', 'center', resultColor);

@@ -8,8 +8,8 @@
 %       ├─ (0) 시작 안내 화면: 'Press SPACE to start' (1회 Flip 후 while true + KbCheck 대기)
 %       ├─ (1) 초기 위치 배치: 삼각형(왼쪽), 타겟(오른쪽 영역 내 X·Y 무작위)
 %       ├─ (2) [내부 루프 1] 4방향 이동(→←↑↓) -> 스페이스 누르면 break
-%       ├─ (3) 영역 안/밖 판정: 초간단 IsInRect 3점 연결('||' 부분 진입 / '&&' 완전 진입 / 중심점)
-%       ├─ (4) [내부 루프 2] 타겟+삼각형+결과 문구를 while 밖에서 1회만 Flip -> 스페이스만 대기
+%       ├─ (3) 영역 안/밖 판정: 초간단 IsInRect 3점 연결('||' 부분 진입 / '&&' 완전 진입 / 중심점) + 정답/오답 색상(resultColor) 결정
+%       ├─ (4) [내부 루프 2] 타겟+삼각형+색상 결과 문구(resultColor)를 while 밖에서 1회만 Flip -> 스페이스만 대기
 %       ├─ (5) 결과 1줄 기록: results(trial, :) (8열)
 %       └─ (6) 절반(5회) 지나면 [내부 루프 3] 휴식 화면 대기 (RestrictKeys + while true + KbCheck)
 %   Part 4. 결과 표(Table) 변환 & 날짜/시간 타임스탬프 CSV 파일 저장 (덮어쓰기 방지)
@@ -161,6 +161,7 @@ try
     % - 결과: 목록에 없는 다른 키를 눌러도 KbCheck가 전부 0으로 무시함
     RestrictKeysForKbCheck([spaceKey, escKey]);
     while true
+        % keyCode가 전체 키의 0/1 상태를 담고 있으므로 keyIsDown 검사 없이 바로 keyCode(특정키)를 확인해도 됨
         [keyIsDown, ~, keyCode] = KbCheck;
         if keyCode(escKey)
             error('사용자에 의해 중단되었습니다');
@@ -312,9 +313,15 @@ try
                    IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ... % 2번 점: 왼쪽 아래 꼭짓점
                    IsInRect(triX + TriSize/2, triY,             targetRect);       % 3번 점: 오른쪽 끝 꼭짓점
 
+        % [정답/오답 문구 및 글자 색상 분기 — v2 동기화]
+        % - 정답(isInside == 1): 초록 계열 RGB [0, 255, 100] + 'correct'
+        % - 오답(isInside == 0): 빨강 계열 RGB [255, 80, 80] + 'wrong'
+        % - 주의: 각 대입문 끝에 세미콜론(';')을 붙여야 명령 창에 RGB 숫자가 출력되지 않음
         if isInside
+            resultColor = [0, 255, 100];
             resultText = 'correct';
         else
+            resultColor = [255, 80, 80];
             resultText = 'wrong';
         end
 
@@ -323,9 +330,11 @@ try
         % [진행 논리] 1) Screen('Flip')를 하면 직전 화면(타겟·삼각형)이 지워지므로,
         %               DrawFormattedText 바로 위에 타겟과 최종 삼각형을 한 번 더 그려서
         %               내가 넣은 위치와 correct/wrong 글자가 한 화면에 함께 보이게 함!
-        %            2) 고정된 결과 화면이므로 Screen('Flip')는 while 밖에서 딱 1번만 호출!
+        %            2) 위 if/else에서 결정한 resultColor(초록/빨강)를 DrawFormattedText에 넘겨
+        %               정답과 오답을 시각적으로 즉시 구분할 수 있게 함!
+        %            3) 고정된 결과 화면이므로 Screen('Flip')는 while 밖에서 딱 1번만 호출!
         %               (Flip을 while 안에만 두고 그리기 코드를 밖에 두면 2번째 프레임에 글자가 사라짐)
-        %            3) 대기 루프는 익숙한 RestrictKeysForKbCheck + while true + KbCheck를 그대로 사용!
+        %            4) 대기 루프는 익숙한 RestrictKeysForKbCheck + while true + KbCheck를 그대로 사용!
         % -----------------------------------------------------------------
         % 최종 (triX, triY) 위치의 삼각형 꼭짓점 좌표 (결과 화면에 도형을 함께 보여주기 위함)
         triPoints = [triX - TriSize/2, triY - TriSize/2;
@@ -338,8 +347,8 @@ try
         Screen('FrameRect', window, targetBorderColor, targetRect, 3);
         Screen('FillPoly', window, TriColor, triPoints);
 
-        % [2단계] 도형 위에 결과 문구('correct' 또는 'wrong') 그리기
-        DrawFormattedText(window, resultText, 'center', 'center', white);
+        % [2단계] 도형 위에 결과 문구('correct'=초록 / 'wrong'=빨강) 그리기
+        DrawFormattedText(window, resultText, 'center', 'center', resultColor);
 
         % [3단계] while 진입 전에 딱 1번만 Flip! (화면이 고정된 채 스페이스 대기)
         Screen('Flip', window);

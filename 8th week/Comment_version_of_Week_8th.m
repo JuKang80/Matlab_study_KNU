@@ -3,16 +3,16 @@
 % =========================================================================
 % [전체 진행 논리 지도 (Big Picture)]
 %   Part 1. 환경 초기화 & Windows 창 열기 (도화지 준비)
-%   Part 2. 실험 설정 & 변수 선언 (키 코드, 삼각형, 타겟 영역, 9열 빈 결과표, 중도종료 플래그)
+%   Part 2. 실험 설정 & 변수 선언 (키 코드, 삼각형, 타겟 영역, 8열 빈 결과표)
 %   Part 3. 시작 안내 화면 & 메인 시행 루프 (for trial = 1:totalTrials, 총 10회 반복)
-%       ├─ (0) 시작 안내 화면: 'Press SPACE to start' (KbWait 대기)
-%       ├─ (1) 초기 위치 배치: 삼각형(왼쪽), 타겟(오른쪽 영역 내 X·Y 무작위) & RT 시작 시각 기록
-%       ├─ (2) [내부 루프 1] 4방향 이동(→←↑↓) -> 스페이스 누르면 RT 기록 후 break / ESC면 중도종료 플래그
-%       ├─ (3) 영역 안/밖 판정: 꼭짓점 3개 전부 포함(엄격 판정) -> 'correct' or 'wrong' + 색상 분기
-%       ├─ (4) [결과 피드백] 타겟+삼각형+결과 문구를 1회만 Flip -> RestrictKeys + KbWait로 스페이스만 대기
-%       ├─ (5) 결과 1줄 기록: results(trial, :) (RT 포함 9열) & completedTrials 갱신
-%       └─ (6) 절반(5회) 지나면 휴식 화면 대기 (RestrictKeys + KbWait)
-%   Part 4. 완료된 시행분만 Table 변환 & 날짜/시간 CSV 저장 + 완료 안내 화면
+%       ├─ (0) 시작 안내 화면: 'Press SPACE to start' (1회 Flip 후 while true + KbCheck 대기)
+%       ├─ (1) 초기 위치 배치: 삼각형(왼쪽), 타겟(오른쪽 영역 내 X·Y 무작위)
+%       ├─ (2) [내부 루프 1] 4방향 이동(→←↑↓) -> 스페이스 누르면 break
+%       ├─ (3) 영역 안/밖 판정: 초간단 IsInRect 3점 연결('||' 부분 진입 / '&&' 완전 진입 / 중심점)
+%       ├─ (4) [내부 루프 2] 타겟+삼각형+결과 문구를 while 밖에서 1회만 Flip -> 스페이스만 대기
+%       ├─ (5) 결과 1줄 기록: results(trial, :) (8열)
+%       └─ (6) 절반(5회) 지나면 [내부 루프 3] 휴식 화면 대기 (RestrictKeys + while true + KbCheck)
+%   Part 4. 결과 표(Table) 변환 & 날짜/시간 타임스탬프 CSV 파일 저장 (덮어쓰기 방지)
 %   Part 5. 정상 종료 및 에러 시 안전 복구 (try / catch)
 % =========================================================================
 
@@ -137,20 +137,10 @@ try
     targetWidth = 180;
     targetHeight = 180;
 
-    % [추가] 결과 피드백 문구 색상 ([R, G, B]): 정답은 초록, 오답은 빨강으로 직관적 구분
-    correctColor = [0, 255, 100];
-    wrongColor = [255, 80, 80];
-
     % [cell(행, 열)]
-    % - 인수: (1) 행 개수 totalTrials(10), (2) 열 개수 9 (기존 8열 + 반응시간 RT 1열 추가)
-    % - 결과: 숫자(좌표·RT)와 문자열('correct'/'wrong')을 한 표에 섞어 담을 수 있는 10x9 빈 셀 배열 생성
-    results = cell(totalTrials, 9);
-
-    % [추가 — 중도 종료 시 부분 결과 보존 플래그]
-    % - aborted: ESC를 눌렀는지 여부 (false=진행 중, true=사용자 중단)
-    % - completedTrials: 실제로 판정·기록까지 완료한 시행 수 (중도 종료 시 1:completedTrials만 CSV 저장)
-    aborted = false;
-    completedTrials = 0;
+    % - 인수: (1) 행 개수 totalTrials(10), (2) 열 개수 8
+    % - 결과: 숫자(좌표)와 문자열('correct'/'wrong')을 한 표에 섞어 담을 수 있는 10x8 빈 셀 배열 생성
+    results = cell(totalTrials, 8);
 
     % [추가 — 실험 시작 전 키 초기화]
     % - 실험 실행 직전에 눌려 있던 키(예: MATLAB 실행 단축키)가 시작 화면/1회차로 넘어오지 않게 대기
@@ -159,299 +149,273 @@ try
     %% [Part 3] 시작 안내 화면 & 메인 실험 루프 (총 totalTrials 회 시행 반복)
     % ---------------------------------------------------------------------
     % (0) [추가] 실험 시작 안내 화면 ('Press SPACE to start')
-    % [진행 논리] 실행 즉시 1회차가 뜨면 참가자가 준비되지 않은 채 RT가 측정되므로,
-    %             스페이스바를 누를 때까지 안내 문구를 1번만 띄워두고 대기함.
+    % [진행 논리] 실행 즉시 1회차가 뜨면 당황할 수 있으므로, 안내 문구를 1번만 Flip해 띄워두고
+    %             익숙한 RestrictKeysForKbCheck + while true + KbCheck 구조로 스페이스만 대기함.
+    %             대기 루프를 빠져나오자마자 RestrictKeysForKbCheck([])로 잠금을 꼭 풀어줘야 함!
     % ---------------------------------------------------------------------
-    DrawFormattedText(window, 'Press SPACE to start\n\n(Arrow keys: Move / SPACE: Submit / ESC: Quit)', 'center', 'center', white);
-    Screen('Flip', window);
+    DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
+    Screen('Flip', window); % 움직이지 않는 안내 화면이므로 while 밖에서 딱 1번만 Flip!
 
     % [RestrictKeysForKbCheck(허용키배열)]
     % - 인수: 검사할 키 번호 목록 [spaceKey, escKey]
-    % - 결과: 목록에 없는 다른 키를 눌러도 KbCheck/KbWait가 전부 무시함
+    % - 결과: 목록에 없는 다른 키를 눌러도 KbCheck가 전부 0으로 무시함
     RestrictKeysForKbCheck([spaceKey, escKey]);
-
-    % [KbWait(deviceNumber, forWhat)]
-    % - 인수: (1) [] (기본 전체 키보드), (2) 2 = "먼저 모든 키에서 손이 떼어진 뒤, 새로 키가 눌릴 때까지 대기"
-    % - 적용: 위에서 RestrictKeysForKbCheck로 키를 잠갔으므로, 오직 SPACE 또는 ESC가 눌릴 때만 통과!
-    % - 결과: 1번 출력 ~(눌린 시각, 미사용), 2번 출력 keyCode(방금 눌린 키의 0/1 배열)
-    % - [장점] while true + KbCheck를 직접 돌리지 않아도 함수 내부에서 알아서 대기해 코드가 깔끔해짐
-    [~, keyCode] = KbWait([], 2);
-    KbReleaseWait; % 스페이스에서 손을 떼어야 1회차로 넘어감 (키 잔여 입력 방지)
-    RestrictKeysForKbCheck([]); % 잠금 즉시 해제! (안 풀면 1회차 방향키가 먹히지 않음)
-
-    if keyCode(escKey)
-        aborted = true;
+    while true
+        [keyIsDown, ~, keyCode] = KbCheck;
+        if keyCode(escKey)
+            error('사용자에 의해 중단되었습니다');
+        end
+        if keyCode(spaceKey)
+            KbReleaseWait; % 스페이스에서 손을 떼어야 1회차로 넘어감 (키 잔여 입력 방지)
+            break;
+        end
     end
+    % [★필수] 인수 [] (빈 배열) 전달 -> 모든 키 입력 제한 해제 (안 풀면 1회차 방향키가 먹히지 않음!)
+    RestrictKeysForKbCheck([]);
+    % (참고: 위 while true 블록 전체를 `[~, keyCode] = KbWait([], 2); KbReleaseWait;` 로 줄일 수도 있으나,
+    %  이미 익숙한 while true + KbCheck를 그대로 쓰는 것이 가장 직관적이고 안 헷갈립니다!)
 
-    % [진행 논리] 바깥 for문 1바퀴 = 실험 1시행(Trial). 시작 화면에서 ESC를 안 눌렀을 때만 실행.
-    if ~aborted
-        for trial = 1:totalTrials
-            % [추가] 매 시행 시작 시 이전 시행의 키 눌림 잔여(Carryover) 완전 차단
-            KbReleaseWait;
+    % [진행 논리] 바깥 for문 1바퀴 = 실험 1시행(Trial). 10바퀴를 모두 돌면 Part 4(파일 저장)로 넘어감.
+    for trial = 1:totalTrials
+        % [추가] 매 시행 시작 시 이전 시행의 키 눌림 잔여(Carryover) 완전 차단
+        KbReleaseWait;
 
-            % -----------------------------------------------------------------
-            % (1) 삼각형 & 특정 영역 초기 위치 배치
-            % -----------------------------------------------------------------
-            triX = 150;     % 삼각형은 매 시행 왼쪽(X=150)에서 출발
-            triY = centerY; % Y좌표는 화면 세로 정중앙에서 출발
+        % -----------------------------------------------------------------
+        % (1) 삼각형 & 특정 영역 초기 위치 배치
+        % -----------------------------------------------------------------
+        triX = 150;     % 삼각형은 매 시행 왼쪽(X=150)에서 출발
+        triY = centerY; % Y좌표는 화면 세로 정중앙에서 출발
 
-            % [randi([최솟값, 최댓값])]
-            % - 인수: 정수 범위 [min, max] (round(centerX)로 소수점 해상도 에러 방지)
-            % - 적용1: 화면 중앙(centerX)부터 오른쪽 여백 전(screenWidth - 150) 사이에서 무작위 정수 추출
-            % - 결과1: 타겟 영역 중심 X좌표(targetX) 결정
-            targetX = randi([round(centerX), screenWidth - 150]);
+        % [randi([최솟값, 최댓값])]
+        % - 인수: 정수 범위 [min, max] (round(centerX)로 소수점 해상도 에러 방지)
+        % - 적용1: 화면 중앙(centerX)부터 오른쪽 여백 전(screenWidth - 150) 사이에서 무작위 정수 1개 추출
+        % - 결과1: 타겟 영역 중심 X좌표(targetX) 결정
+        targetX = randi([round(centerX), screenWidth - 150]);
 
-            % - 적용2 [추가 — 4방향 이동 확장]: 상단 150px ~ 하단 여백 150px 사이에서 Y좌표도 무작위 추출
-            % - 결과2: 타겟이 화면 위/아래로도 매 시행 다르게 배치되어 4방향 조작이 의미 있게 작동함
-            targetY = randi([150, screenHeight - 150]);
+        % - 적용2 [추가 — 4방향 이동 확장]: 상단 150px ~ 하단 여백(screenHeight - 150) 사이에서 Y좌표도 무작위 추출
+        % - 결과2: 타겟이 매 시행 위/아래로도 다르게 배치되어 4방향 이동 연습이 가능해짐
+        targetY = randi([150, screenHeight - 150]);
 
-            % [CenterRectOnPointd(기준사각형, 중심X, 중심Y)]
-            % - 인수: (1) [0, 0, 너비, 높이] 크기 상자, (2) 옮길 중심 X, (3) 옮길 중심 Y
-            % - 적용: 180x180 상자를 (targetX, targetY) 중심으로 이동
-            % - 결과: [Left, Top, Right, Bottom] 4개 좌표가 담긴 targetRect 반환
-            targetRect = CenterRectOnPointd([0, 0, targetWidth, targetHeight], targetX, targetY);
+        % [CenterRectOnPointd(기준사각형, 중심X, 중심Y)]
+        % - 인수: (1) [0, 0, 너비, 높이] 크기 상자, (2) 옮길 중심 X, (3) 옮길 중심 Y
+        % - 적용: 180x180 상자를 (targetX, targetY) 중심으로 이동
+        % - 결과: [Left, Top, Right, Bottom] 4개 좌표가 담긴 targetRect 반환
+        targetRect = CenterRectOnPointd([0, 0, targetWidth, targetHeight], targetX, targetY);
 
-            % [추가 — GetSecs: 반응시간(RT) 측정 시작 시각 기록]
-            % - 인수: 없음
-            % - 결과: PTB 고정밀 타이머 기준 현재 시각(초 단위 실수) 반환
-            % - 적용: 이동 루프 진입 직전 시각을 찍어두고, 스페이스 제출 시각과의 차이로 RT(초) 계산
-            startTime = GetSecs;
+        % -----------------------------------------------------------------
+        % (2) [내부 루프 1] 4방향 삼각형 이동 구간 (스페이스 누를 때까지 반복)
+        % [진행 논리] 사람이 스페이스바를 누를 때까지 무한 반복하며 매 순간 화면을 새로 그림.
+        %             스페이스바를 누르면 break로 이 while문만 빠져나와 (3) 판정으로 이동.
+        % -----------------------------------------------------------------
+        while true
+            % 삼각형 중심 (triX, triY) 기준으로 오른쪽을 향하는(▶) 꼭짓점 3개 계산 (3행 2열 [X, Y] 행렬)
+            % (화면 좌표계: 오른쪽=+X, 아래쪽=+Y, 위쪽=-Y)
+            triPoints = [triX - TriSize/2, triY - TriSize/2; % 1행: 왼쪽 위 꼭짓점
+                         triX - TriSize/2, triY + TriSize/2; % 2행: 왼쪽 아래 꼭짓점
+                         triX + TriSize/2, triY];            % 3행: 오른쪽 끝 꼭짓점
 
-            % -----------------------------------------------------------------
-            % (2) [내부 루프 1] 4방향 삼각형 이동 구간 (스페이스 누를 때까지 반복)
-            % [진행 논리] 사람이 스페이스바를 누를 때까지 무한 반복하며 매 순간 화면을 새로 그림.
-            %             스페이스바를 누르면 RT를 계산하고 break로 빠져나와 (3) 판정으로 이동.
-            %             방향키와 스페이스/ESC를 elseif로 묶어 같은 프레임 동시 입력 충돌을 방지함.
-            % -----------------------------------------------------------------
-            while true
-                % 삼각형 중심 (triX, triY) 기준으로 오른쪽을 향하는(▶) 꼭짓점 3개 계산 (3행 2열 [X, Y] 행렬)
-                % (화면 좌표계: 오른쪽=+X, 아래쪽=+Y, 위쪽=-Y)
-                triPoints = [triX - TriSize/2, triY - TriSize/2; % 1행: 왼쪽 위 꼭짓점
-                             triX - TriSize/2, triY + TriSize/2; % 2행: 왼쪽 아래 꼭짓점
-                             triX + TriSize/2, triY];            % 3행: 오른쪽 끝 꼭짓점
-
-                % [Screen('FillRect', 창ID, 색상, (선택)영역)]
-                % - 적용1: 영역 생략 시 창 전체를 gray로 칠해 이전 프레임 그림을 깨끗이 지움
-                Screen('FillRect', window, gray);
-                % - 적용2: targetRect 영역 내부를 반투명 초록색(targetFillColor)으로 채움
-                Screen('FillRect', window, targetFillColor, targetRect);
-
-                % [Screen('FrameRect', 창ID, 색상, 영역, 선두께)]
-                % - 인수: 채우기 없이 테두리만 그림 (선 두께 3px)
-                Screen('FrameRect', window, targetBorderColor, targetRect, 3);
-
-                % [Screen('FillPoly', 창ID, 색상, 꼭짓점행렬)]
-                % - 인수: triPoints(3x2 좌표)를 순서대로 이어 내부를 TriColor(흰색)로 채운 삼각형 그리기
-                Screen('FillPoly', window, TriColor, triPoints);
-
-                % [sprintf(서식문자열, 값1, 값2)]
-                % - 인수: '%d' 자리에 정수 trial과 totalTrials를 순서대로 끼워 'Trial 1/10' 같은 문자열 생성
-                % [DrawFormattedText(창ID, 문자열, X, Y, 색상)]
-                % - 인수: 만든 문자열을 화면 좌상단 (40, 40) 위치에 흰색(white)으로 그림
-                DrawFormattedText(window, sprintf('Trial %d/%d', trial, totalTrials), 40, 40, white);
-
-                % [Screen('Flip', 창ID)]
-                % - 인수: window
-                % - 결과: 지금까지 백 버퍼(도화지)에 그린 모든 요소를 모니터 화면에 한 번에 출력
-                Screen('Flip', window);
-
-                % [KbCheck]
-                % - 인수: 없음
-                % - 결과: (1) keyIsDown(아무 키나 눌렸으면 1), (2) ~(시각, 미사용이라 버림), (3) keyCode(전체 키의 0/1 상태 배열)
-                [keyIsDown, ~, keyCode] = KbCheck;
-
-                % 오른쪽 화살표 키가 눌렸다면(1이면) 오른쪽(+X) 이동
-                if keyCode(rightKey)
-                    % [min(값1, 값2)]
-                    % - 인수: (1) 오른쪽 끝 한계선(screenWidth - TriSize/2), (2) 이동 후 위치(triX + TrimoveSpeed)
-                    % - 결과: 두 값 중 작은 쪽을 택해 삼각형이 화면 오른쪽 벽 밖으로 나가지 못하게 제한
-                    triX = min(screenWidth - TriSize/2, triX + TrimoveSpeed);
-
-                    % [KbReleaseWait]
-                    % - 인수: 없음
-                    % - 결과: 누른 키에서 손가락을 뗄 때까지 멈춰 기다림 -> 1번 누름 = 1칸 이동 구현
-                    KbReleaseWait;
-
-                % [추가] 왼쪽 화살표: 왼쪽(-X) 이동
-                elseif keyCode(leftKey)
-                    % [max(값1, 값2)]
-                    % - 인수: (1) 왼쪽 끝 한계선(TriSize/2), (2) 이동 후 위치(triX - TrimoveSpeed)
-                    % - 결과: 두 값 중 큰 쪽을 택해 삼각형 왼쪽 변이 0px 밖으로 나가지 못하게 제한
-                    triX = max(TriSize/2, triX - TrimoveSpeed);
-                    KbReleaseWait;
-
-                % [추가] 위쪽 화살표: 화면 좌표계에서는 위쪽이 -Y 방향!
-                elseif keyCode(upKey)
-                    triY = max(TriSize/2, triY - TrimoveSpeed);
-                    KbReleaseWait;
-
-                % [추가] 아래쪽 화살표: 화면 좌표계에서는 아래쪽이 +Y 방향!
-                elseif keyCode(downKey)
-                    triY = min(screenHeight - TriSize/2, triY + TrimoveSpeed);
-                    KbReleaseWait;
-
-                % 스페이스바를 누르면 현재 위치로 제출하고 이동 루프 종료
-                elseif keyCode(spaceKey)
-                    % [추가 — 반응시간(RT) 계산] 제출 순간 시각에서 시행 시작 시각을 빼서 초(sec) 단위 RT 산출
-                    rt = GetSecs - startTime;
-                    KbReleaseWait; % 손을 뗄 때까지 기다려야 바로 뒤 결과 화면이 연달아 통과되지 않음
-                    break;         % 가장 가까운 while문([내부 루프 1])만 탈출 -> (3) 판정 단계로 이동
-
-                % [개선] ESC 키: error()로 강제 폭파하지 않고 aborted 플래그를 세워 완료된 시행 데이터를 보존
-                elseif keyCode(escKey)
-                    aborted = true;
-                    KbReleaseWait;
-                    break;
-                end
-            end
-
-            % [진행 논리] 이동 중 ESC를 눌렀다면 미완료 시행은 판정/기록하지 않고 바깥 for문도 즉시 탈출
-            if aborted
-                break;
-            end
-
-            % [안전 장치] 최종 (triX, triY) 기준으로 꼭짓점 3개 좌표를 한 번 더 최신화 (판정 1프레임 오차 차단)
-            triPoints = [triX - TriSize/2, triY - TriSize/2;
-                         triX - TriSize/2, triY + TriSize/2;
-                         triX + TriSize/2, triY];
-
-            % -----------------------------------------------------------------
-            % (3) 영역 안/밖 판정 ('correct' or 'wrong')
-            % -----------------------------------------------------------------
-            % [참고 — 방법 1: 중심점 기준 판정 (기존 기본 방식)]
-            %   [IsInRect(점X, 점Y, 사각형)]
-            %   - 인수: (1) 삼각형 최종 X좌표 triX, (2) 최종 Y좌표 triY, (3) 타겟 사각형 targetRect
-            %   - 결과: 점이 사각형 경계 안에 들어있으면 1(true), 밖이면 0(false) 반환
-            %   예) isInside = IsInRect(triX, triY, targetRect);
-            %
-            % [적용 — 방법 2: 꼭짓점 3개 전부 포함 기준 (엄격 판정)]
-            % - 이유: IsInRect는 단일 점(스칼라) 기준 함수라 점 3개(벡터)를 넘기면 PTB 버전에 따라 에러가 날 수 있음.
-            %         따라서 요소별 비교 연산자(&)와 all(...)을 직접 조합하는 것이 가장 안전함!
-            % - triPoints(:, 1): 모든 행(:)의 1열 -> 꼭짓점 3개의 X좌표 [x1; x2; x3]
-            % - triPoints(:, 2): 모든 행(:)의 2열 -> 꼭짓점 3개의 Y좌표 [y1; y2; y3]
-            % - targetRect(1..4): [Left(1), Top(2), Right(3), Bottom(4)]
-            % - all(...): 꼭짓점 3개가 전부(ALL) 경계 안에 있을 때만 1(true), 하나라도 삐져나가면 0(false)
-            isInside = all(triPoints(:, 1) >= targetRect(1) & triPoints(:, 1) <= targetRect(3) & ...
-                           triPoints(:, 2) >= targetRect(2) & triPoints(:, 2) <= targetRect(4));
-
-            if isInside
-                resultText = 'correct';
-                resultColor = correctColor;
-            else
-                resultText = 'wrong';
-                resultColor = wrongColor;
-            end
-
-            % -----------------------------------------------------------------
-            % (4) [결과 피드백] 결과 표시 후 오직 스페이스 키로만 다음 시행 넘어가기
-            % [진행 논리] 타겟과 삼각형을 함께 다시 그려 참가자가 왜 correct/wrong인지 눈으로 확인하게 함.
-            %             움직이지 않는 화면이므로 Screen('Flip')는 while 밖에서 딱 1번만 호출해야 함!
-            %             (Flip을 while 안에 넣으면 2번째 프레임부터 빈 백버퍼가 뒤집혀 글자가 사라짐)
-            %             RestrictKeysForKbCheck로 키를 잠갔으므로 while true 대신 KbWait([], 2) 1줄로 대기!
-            % -----------------------------------------------------------------
+            % [Screen('FillRect', 창ID, 색상, (선택)영역)]
+            % - 적용1: 영역 생략 시 창 전체를 gray로 칠해 이전 프레임 그림을 깨끗이 지움
             Screen('FillRect', window, gray);
+            % - 적용2: targetRect 영역 내부를 반투명 초록색(targetFillColor)으로 채움
             Screen('FillRect', window, targetFillColor, targetRect);
+
+            % [Screen('FrameRect', 창ID, 색상, 영역, 선두께)]
+            % - 인수: 채우기 없이 테두리만 그림 (선 두께 3px)
             Screen('FrameRect', window, targetBorderColor, targetRect, 3);
+
+            % [Screen('FillPoly', 창ID, 색상, 꼭짓점행렬)]
+            % - 인수: triPoints(3x2 좌표)를 순서대로 이어 내부를 TriColor(흰색)로 채운 삼각형 그리기
             Screen('FillPoly', window, TriColor, triPoints);
 
-            % [sprintf('%s\n\n...', resultText)]
-            % - 인수: '%s' 자리에 문자열 resultText('correct' 또는 'wrong')를 끼우고 '\n\n'으로 줄바꿈
-            % - 결과: 상단에는 정답/오답 문구, 아래에는 다음 행동 안내 문구를 함께 표시
-            feedbackMsg = sprintf('%s\n\nPress SPACE for next trial', resultText);
-            DrawFormattedText(window, feedbackMsg, 'center', 'center', resultColor);
-            Screen('Flip', window); % 고정 화면이므로 딱 1번만 Flip!
+            % [sprintf(서식문자열, 값1, 값2)]
+            % - 인수: '%d' 자리에 정수 trial과 totalTrials를 순서대로 끼워 'Trial 1/10' 같은 문자열 생성
+            % [DrawFormattedText(창ID, 문자열, X, Y, 색상)]
+            % - 인수: 만든 문자열을 화면 좌상단 (40, 40) 위치에 흰색(white)으로 그림
+            DrawFormattedText(window, sprintf('Trial %d/%d', trial, totalTrials), 40, 40, white);
 
-            % [RestrictKeysForKbCheck(허용키배열)]
-            % - 인수: 검사할 키 번호 목록 [spaceKey, escKey]
-            % - 결과: 목록에 없는 다른 키를 눌러도 KbWait가 전부 무시함
-            RestrictKeysForKbCheck([spaceKey, escKey]);
-            [~, keyCode] = KbWait([], 2); % SPACE 또는 ESC가 새로 눌릴 때까지 대기
-            KbReleaseWait;
-            % 인수 [] (빈 배열) 전달 -> 모든 키 입력 제한 해제 (다음 시행에서 방향키 정상 작동)
-            RestrictKeysForKbCheck([]);
+            % [Screen('Flip', 창ID)]
+            % - 인수: window
+            % - 결과: 지금까지 백 버퍼(도화지)에 그린 모든 요소를 모니터 화면에 한 번에 출력
+            Screen('Flip', window);
 
-            if keyCode(escKey)
-                aborted = true;
-            end
+            % [KbCheck]
+            % - 인수: 없음
+            % - 결과: (1) keyIsDown(아무 키나 눌렸으면 1), (2) ~(시각, 미사용이라 버림), (3) keyCode(전체 키의 0/1 상태 배열)
+            [keyIsDown, ~, keyCode] = KbCheck;
 
-            % -----------------------------------------------------------------
-            % (5) 이번 시행 결과 1줄 기록
-            % -----------------------------------------------------------------
-            % results(trial, :) = { ... }
-            % - trial번째 행의 모든 열(:)에 9가지 정보(시행번호, 최종좌표X/Y, 타겟 L/T/R/B, 정답여부, RT)를 채움
-            results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText, rt};
-            completedTrials = trial; % 완료 시행 수 갱신 (방금 판정된 시행까지 안전하게 저장 대상 포함)
+            % 오른쪽 화살표 키가 눌렸다면(1이면) 오른쪽(+X) 좌표 이동
+            if keyCode(rightKey)
+                % [min(값1, 값2)]
+                % - 인수: (1) 오른쪽 끝 한계선(screenWidth - TriSize/2), (2) 이동 후 위치(triX + TrimoveSpeed)
+                % - 결과: 두 값 중 작은 쪽을 택해 삼각형이 화면 오른쪽 벽 밖으로 나가지 못하게 제한
+                triX = min(screenWidth - TriSize/2, triX + TrimoveSpeed);
 
-            % 결과 화면에서 ESC를 눌렀다면 방금 기록한 시행까지만 저장하고 실험 종료
-            if aborted
-                break;
-            end
-
-            % -----------------------------------------------------------------
-            % (6) 절반 시행이 지났을 때 휴식 시간 부여
-            % [진행 논리] 현재 시행이 restTrials(5)이고 마지막 시행이 아닐 때만 휴식 화면 표시.
-            %             결과 화면과 동일하게 RestrictKeysForKbCheck + KbWait([], 2)로 일관되게 처리함.
-            % -----------------------------------------------------------------
-            if trial == restTrials && trial < totalTrials
-                Screen('FillRect', window, gray);
-                DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
-                Screen('Flip', window);
-
-                RestrictKeysForKbCheck([spaceKey, escKey]);
-                [~, keyCode] = KbWait([], 2);
+                % [KbReleaseWait]
+                % - 인수: 없음
+                % - 결과: 누른 키에서 손가락을 뗄 때까지 멈춰 기다림 -> 1번 누름 = 1칸 이동 구현
                 KbReleaseWait;
-                RestrictKeysForKbCheck([]);
+            end
 
+            % [추가] 왼쪽 화살표: 왼쪽(-X) 이동
+            if keyCode(leftKey)
+                % [max(값1, 값2)]
+                % - 인수: (1) 왼쪽 끝 한계선(TriSize/2), (2) 이동 후 위치(triX - TrimoveSpeed)
+                % - 결과: 두 값 중 큰 쪽을 택해 삼각형 왼쪽 변이 0px 밖으로 나가지 못하게 제한
+                triX = max(TriSize/2, triX - TrimoveSpeed);
+                KbReleaseWait;
+            end
+
+            % [추가] 위쪽 화살표: 화면 좌표계에서는 위쪽이 -Y 방향!
+            if keyCode(upKey)
+                triY = max(TriSize/2, triY - TrimoveSpeed);
+                KbReleaseWait;
+            end
+
+            % [추가] 아래쪽 화살표: 화면 좌표계에서는 아래쪽이 +Y 방향!
+            if keyCode(downKey)
+                triY = min(screenHeight - TriSize/2, triY + TrimoveSpeed);
+                KbReleaseWait;
+            end
+
+            % 스페이스바를 누르면 현재 위치로 제출하고 이동 루프 종료
+            if keyCode(spaceKey)
+                KbReleaseWait; % 손을 뗄 때까지 기다려야 바로 뒤 [내부 루프 2]가 연달아 통과되지 않음
+                break;         % 가장 가까운 while문([내부 루프 1])만 탈출 -> (3) 판정 단계로 이동
+            end
+
+            % ESC 키를 누르면 즉시 에러를 발생시켜 catch 블록(안전 종료)으로 점프
+            if keyCode(escKey)
+                error('사용자에 의해 중단되었습니다');
+            end
+        end
+
+        % -----------------------------------------------------------------
+        % (3) 영역 안/밖 판정 ('correct' or 'wrong') — 초간단 IsInRect 활용!
+        % -----------------------------------------------------------------
+        % [IsInRect(점X, 점Y, 사각형)]
+        % - 인수: (1) 검사할 점의 X좌표, (2) 점의 Y좌표, (3) 타겟 사각형 targetRect
+        % - 결과: 그 점이 사각형 경계 안에 들어있으면 1(true), 밖이면 0(false) 반환
+        % - 주의: IsInRect는 한 번에 점 1개만 검사하는 함수이므로, 꼭짓점 3개를 검사할 때는
+        %         행렬로 묶지 말고 아래처럼 IsInRect를 점마다 1번씩(총 3번) 호출해 이으면 새 문법 없이 끝남!
+        %
+        % [선택지 비교 — 원하는 1가지만 주석 해제해서 사용 가능]
+        % 1) 중심점 기준 (기본): 삼각형 중심(triX, triY)만 들어가면 정답
+        %    isInside = IsInRect(triX, triY, targetRect);
+        %
+        % 2) ★적용된 방식 — 초간단 부분 진입 ('||' = OR, 또는):
+        %    왼쪽 위 / 왼쪽 아래 / 오른쪽 끝 꼭짓점 3개 중 1개라도 타겟 안에 들어오면 정답!
+        %
+        % 3) 초간단 완전 포함 ('&&' = AND, 그리고):
+        %    아래 코드에서 맨 끝의 '||' 두 개만 '&&'로 바꾸면 꼭짓점 3개가 전부 들어와야 정답!
+        isInside = IsInRect(triX - TriSize/2, triY - TriSize/2, targetRect) || ... % 1번 점: 왼쪽 위 꼭짓점
+                   IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ... % 2번 점: 왼쪽 아래 꼭짓점
+                   IsInRect(triX + TriSize/2, triY,             targetRect);       % 3번 점: 오른쪽 끝 꼭짓점
+
+        if isInside
+            resultText = 'correct';
+        else
+            resultText = 'wrong';
+        end
+
+        % -----------------------------------------------------------------
+        % (4) [내부 루프 2] 결과 표시 후 오직 스페이스 키로만 다음 시행 넘어가기
+        % [진행 논리] 1) Screen('Flip')를 하면 직전 화면(타겟·삼각형)이 지워지므로,
+        %               DrawFormattedText 바로 위에 타겟과 최종 삼각형을 한 번 더 그려서
+        %               내가 넣은 위치와 correct/wrong 글자가 한 화면에 함께 보이게 함!
+        %            2) 고정된 결과 화면이므로 Screen('Flip')는 while 밖에서 딱 1번만 호출!
+        %               (Flip을 while 안에만 두고 그리기 코드를 밖에 두면 2번째 프레임에 글자가 사라짐)
+        %            3) 대기 루프는 익숙한 RestrictKeysForKbCheck + while true + KbCheck를 그대로 사용!
+        % -----------------------------------------------------------------
+        % 최종 (triX, triY) 위치의 삼각형 꼭짓점 좌표 (결과 화면에 도형을 함께 보여주기 위함)
+        triPoints = [triX - TriSize/2, triY - TriSize/2;
+                     triX - TriSize/2, triY + TriSize/2;
+                     triX + TriSize/2, triY];
+
+        % [1단계] 배경 + 타겟 상자 + 최종 삼각형 다시 그리기
+        Screen('FillRect', window, gray);
+        Screen('FillRect', window, targetFillColor, targetRect);
+        Screen('FrameRect', window, targetBorderColor, targetRect, 3);
+        Screen('FillPoly', window, TriColor, triPoints);
+
+        % [2단계] 도형 위에 결과 문구('correct' 또는 'wrong') 그리기
+        DrawFormattedText(window, resultText, 'center', 'center', white);
+
+        % [3단계] while 진입 전에 딱 1번만 Flip! (화면이 고정된 채 스페이스 대기)
+        Screen('Flip', window);
+
+        % [RestrictKeysForKbCheck(허용키배열)]
+        % - 인수: 검사할 키 번호 목록 [spaceKey, escKey]
+        % - 결과: 목록에 없는 다른 키를 눌러도 KbCheck가 전부 0으로 무시함
+        RestrictKeysForKbCheck([spaceKey, escKey]);
+        while true
+            [keyIsDown, ~, keyCode] = KbCheck;
+            if keyCode(escKey)
+                error('사용자에 의해 중단되었습니다');
+            end
+            if keyCode(spaceKey)
+                KbReleaseWait;
+                break; % [내부 루프 2] 탈출 -> (5) 결과 기록으로 이동
+            end
+        end
+        % 인수 [] (빈 배열) 전달 -> 모든 키 입력 제한 해제 (다음 시행에서 방향키 정상 작동)
+        RestrictKeysForKbCheck([]);
+
+        % -----------------------------------------------------------------
+        % (5) 이번 시행 결과 1줄 기록
+        % -----------------------------------------------------------------
+        % results(trial, :) = { ... }
+        % - trial번째 행의 모든 열(:)에 8가지 정보(시행번호, 최종좌표X/Y, 타겟 L/T/R/B, 정답여부)를 채움
+        results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
+
+        % -----------------------------------------------------------------
+        % (6) 절반 시행이 지났을 때 휴식 시간 부여
+        % [진행 논리] 현재 시행이 restTrials(5)이고 마지막 시행이 아닐 때만 [내부 루프 3] 실행.
+        %             위 결과 화면과 똑같이 while 밖에서 1번만 Flip하고,
+        %             앞뒤를 RestrictKeysForKbCheck로 감싸 스페이스와 ESC만 반응하게 통일함.
+        % -----------------------------------------------------------------
+        if trial == restTrials && trial < totalTrials
+            DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
+            Screen('Flip', window);
+
+            RestrictKeysForKbCheck([spaceKey, escKey]);
+            while true
+                [keyIsDown, ~, keyCode] = KbCheck;
                 if keyCode(escKey)
-                    aborted = true;
-                    break;
+                    error('사용자에 의해 중단되었습니다');
+                end
+                if keyCode(spaceKey)
+                    KbReleaseWait;
+                    break; % 휴식 대기 종료 -> 바깥 for문의 다음 시행(6회차)으로 이동
                 end
             end
+            RestrictKeysForKbCheck([]);
         end
     end
 
-    %% [Part 4] 결과 저장 (날짜·시간 CSV 파일 내보내기 & 완료 안내)
-    % 9개 열의 제목을 cell 배열로 정의 (results의 9열과 개수·순서가 반드시 일치해야 함)
-    colNames = {'Trial', 'FinalTriX', 'FinalTriY', 'TargetL', 'TargetT', 'TargetR', 'TargetB', 'Result', 'RT'};
+    %% [Part 4] 결과 저장 (날짜·시간 타임스탬프 CSV 파일 내보내기)
+    % 8개 열의 제목을 cell 배열로 정의 (results의 8열과 개수·순서가 반드시 일치해야 함)
+    colNames = {'Trial', 'FinalTriX', 'FinalTriY', 'TargetL', 'TargetT', 'TargetR', 'TargetB', 'Result'};
 
-    % [진행 논리] 완료한 시행이 1개 이상일 때만 1:completedTrials 행을 잘라 저장
-    %             (중도 종료 시 빈 행이 CSV에 섞이거나 에러 나는 현상 방지)
-    if completedTrials > 0
-        % [cell2table(셀배열, 'VariableNames', 열이름배열)]
-        % - 인수: (1) 완료된 행만 자른 results(1:completedTrials, :), (2) 열 제목 colNames
-        % - 결과: 엑셀 표처럼 열 제목이 달린 MATLAB Table 객체(resultTable) 생성
-        resultTable = cell2table(results(1:completedTrials, :), 'VariableNames', colNames);
+    % [cell2table(셀배열, 'VariableNames', 열이름배열)]
+    % - 인수: (1) 10x8 결과 데이터 results, (2) 열 제목 colNames
+    % - 결과: 엑셀 표처럼 열 제목이 달린 MATLAB Table 객체(resultTable) 생성
+    resultTable = cell2table(results, 'VariableNames', colNames);
 
-        % [datetime('now', 'Format', 서식)]
-        % - 인수: 'now'(현재 시각), 'Format'으로 'yyyyMMdd_HHmmss'(예: 20261119_143000) 지정
-        % - 결과: 실행할 때마다 고유한 타임스탬프 문자열을 만들어 기존 CSV 덮어쓰기 방지
-        timeStr = string(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
+    % [datetime('now', 'Format', 서식문자열)]
+    % - 인수: 'now'(현재 시각), 'Format'으로 'yyyyMMdd_HHmmss'(예: 20261119_163000) 지정
+    % - 결과: 실행할 때마다 현재 날짜·시각 문자열 생성 -> 매번 같은 파일에 덮어쓰이는 문제 해결
+    timeStr = string(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
 
-        % [sprintf('week8_result_%s.csv', timeStr)]
-        % - 인수: '%s' 자리에 timeStr 문자열 삽입
-        % - 결과: 예) 'week8_result_20261119_143000.csv' 파일명 생성
-        fileName = sprintf('week8_result_%s.csv', timeStr);
+    % [sprintf('week8_result_%s.csv', timeStr)]
+    % - 인수: '%s' 자리에 timeStr 문자열을 끼워 넣음
+    % - 결과: 예) 'week8_result_20261119_163000.csv' 고유 파일명 완성
+    fileName = sprintf('week8_result_%s.csv', timeStr);
 
-        % [writetable(테이블, 파일이름)]
-        % - 인수: (1) resultTable, (2) 타임스탬프가 붙은 fileName
-        % - 결과: 현재 작업 폴더에 엑셀/메모장 모두에서 열리는 CSV 파일 생성
-        writetable(resultTable, fileName);
-        fprintf('Saved %d trial(s) to %s\n', completedTrials, fileName);
-    else
-        disp('완료된 시행이 없어 CSV 파일을 저장하지 않았습니다.');
-    end
-
-    % [추가] 정상 완료 시 실험 종료 안내 화면 표시 (창이 갑자기 닫히지 않도록 배려)
-    if ~aborted
-        Screen('FillRect', window, gray);
-        DrawFormattedText(window, 'Experiment Complete!\n\nPress SPACE to exit', 'center', 'center', white);
-        Screen('Flip', window);
-
-        RestrictKeysForKbCheck([spaceKey, escKey]);
-        KbWait([], 2);
-        KbReleaseWait;
-        RestrictKeysForKbCheck([]);
-    end
+    % [writetable(테이블, 파일이름)]
+    % - 인수: (1) resultTable, (2) 저장할 파일명 fileName
+    % - 결과: 현재 작업 폴더에 엑셀/메모장 모두에서 열리는 CSV 파일 생성
+    writetable(resultTable, fileName);
 
     %% [Part 5] 정상 종료 및 자원 해제
     RestrictKeysForKbCheck([]); % 키 입력 제한이 남아있지 않도록 초기화

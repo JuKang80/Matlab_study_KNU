@@ -1,17 +1,17 @@
 % 8주차 확장 버전 (4방향 이동 + 피험자 데이터 덮어쓰기 방지 연습용)
 %
 % =========================================================================
-% [진행 현황 체크리스트] (실행 코드는 수정하지 않고 위치별 상태·개선점만 표시함)
-%   [완료 ✅] TODO A (타겟 Y 랜덤), 4방향 이동+KbReleaseWait, leftKey ';' 제거,
-%             결과 화면 Screen('Flip') while 밖 이동, Break Time 키 제한, TODO C (타임스탬프 CSV)
+% [진행 현황 체크리스트] (실행 코드는 수정하지 않고 위치별 상태·남은 수정 사항만 표시함)
+%   [완료 ✅] 시작 화면 while true 'end' 추가 & 중복 escKey 제거,
+%             TODO A (타겟 Y 랜덤), 4방향 이동+KbReleaseWait, leftKey ';' 제거,
+%             결과 판정 3꼭짓점 || 로직, 정답/오답 resultColor 분기,
+%             결과 화면 도형 다시 그리기 + Screen('Flip') while 밖 이동,
+%             Break Time 키 제한 if 안 정리, TODO C (타임스탬프 CSV)
 %
-%   [수정 필요 #1] 시작 화면 while true의 'end' 누락 (try~catch 문법 에러 발생)
-%   [수정 필요 #2] 시작 화면 'screen' 소문자 오타 -> 대문자 'Screen'으로 수정
-%   [수정 필요 #3] 시작 화면 중복 'if keyCode(escKey)' 3줄 삭제 (질문 답변 포함)
-%   [수정 필요 #4] 결과 판정 옛 'isInside = IsInRect(triX, triY, targetRect);'가 3점 판정 결과를 덮어씀!
-%
-%   [개선 제안 #1] 결과 화면에 타겟·삼각형 함께 표시 (도형 유지된 채 판정 확인)
-%   [개선 제안 #2] Break Time 키 제한 위치 정리 & 결과 문구 색상/안내 선택
+%   [수정 필요 #1] 시작 화면 'screen' 소문자 오타 -> 대문자 'Screen'으로 수정
+%   [수정 필요 #2] 결과 판정 옛 'isInside = IsInRect(triX, triY, targetRect);' 1줄 삭제/주석 처리
+%   [수정 필요 #3] 결과 화면 도형 그리기 변수명 오타: 'target, FillColor' -> 'targetFillColor'
+%   (사소한 팁) else 안 'resultColor = [255, 80, 80]' 끝에 ';' 추가 권장
 % =========================================================================
 
 %% [Part 1] 기본 환경 초기화 및 인텔 맥 호환성 특화 설정
@@ -79,9 +79,9 @@ try
 
     %% [Part 3] 메인 실험 루프
 
-    % [완료 ✅] 시작 안내 화면 구조 잘 작성하셨습니다! 아래 3가지 버그만 고치면 완벽합니다.
+    % [완료 ✅] 시작 안내 화면 구조(while end, 중복 escKey 제거 포함) 잘 완성하셨습니다! 아래 1줄 오타만 고치면 완벽합니다.
     DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
-    % [수정 필요 #2] 대소문자 주의: 'screen' -> 'Screen' (소문자면 실행 시 에러 발생)
+    % [수정 필요 #1] ★ 대소문자 오타 (실행 에러): 'screen' -> 대문자 'Screen'으로 수정하세요!
     screen('Flip', window);
     RestrictKeysForKbCheck([spaceKey, escKey]);
     while true
@@ -96,10 +96,7 @@ try
             break;
         end
     end
-    % [수정 필요 #1] ★ 중요: 여기 바로 위에 `while true`를 닫는 `end`가 빠져 있어 catch에서 문법 에러가 납니다!
-    % [수정 필요 #3 & 질문 답변] 네, 맞습니다! 아래 3줄(if keyCode(escKey) ~ end)은 100% 중복이므로 지워주세요!
-    %   (while 안에서 escKey는 이미 검사했고, break로 나온 뒤엔 스페이스를 누른 상태라 실행될 일 없음)
-    % [완료 ✅] RestrictKeysForKbCheck([]) 해제까지 정확히 작성됨!
+    % [완료 ✅] while true의 'end' 추가, 중복 escKey 제거, RestrictKeysForKbCheck([]) 해제까지 깔끔하게 완료!
     RestrictKeysForKbCheck([]);
     for trial = 1:totalTrials
         KbReleaseWait; 
@@ -162,13 +159,11 @@ try
         isInside = IsInRect(triX - TriSize/2, triY - TriSize/2, targetRect) || ...
             IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ...
             IsInRect(triX + TriSize/2, triY, targetRect);
-        % [수정 필요 #4] ★ 중요 버그: 아래 옛 코드가 남아 있어 위에서 구한 3점 판정 결과를 덮어쓰고 있습니다!
+        % [수정 필요 #2] ★ 중요 버그: 아래 옛 코드가 남아 있어 위에서 구한 3점 판정 결과를 덮어쓰고 있습니다!
         %   -> 아래 1줄(`isInside = IsInRect(triX, triY, targetRect);`)을 지우거나 맨 앞에 '%'를 붙여 주석 처리하세요.
         isInside = IsInRect(triX, triY, targetRect);
-        % [개선 제안 #2-A (1/2)] 정답/오답 글자 색을 다르게 하고 싶을 때:
-        %   if isInside 안에 `resultColor = [0, 255, 100];` (초록)
-        %   else        안에 `resultColor = [255, 80, 80];` (빨강) 을 한 줄씩 추가해 두고,
-        %   아래 DrawFormattedText의 마지막 인수 `white`를 `resultColor`로 바꾸면 됩니다!
+        % [완료 ✅] 정답(초록)/오답(빨강) resultColor 분기 적용 완료!
+        %   (사소한 팁: 아래 else 안 `resultColor = [255, 80, 80]` 끝에도 ';'를 붙이면 명령 창에 숫자가 출력되지 않습니다)
         if isInside
             resultColor = [0, 255, 100];
             resultText = 'correct';
@@ -180,25 +175,12 @@ try
         % [완료 ✅] Screen('Flip')를 while 밖으로 빼서 결과 글자 사라짐 버그 해결 완료! (while true + KbCheck 유지 굿!)
         RestrictKeysForKbCheck([spaceKey, escKey]);
 
-        % [개선 제안 #1] 결과 화면에 타겟·삼각형 함께 표시 (선택 — "도화지에 아래에서 위로 겹쳐 그리기")
-        %   왜 필요? Screen('Flip')는 새 도화지를 여는 것이라 글자만 그리면 방금 움직인 상자·삼각형이 사라집니다.
-        %   어떻게? 아래 `DrawFormattedText` 바로 위에 아래 순서(1 -> 2 -> 3)대로 코드를 넣으면
-        %           도형이 그대로 보인 상태에서 맨 위에 correct/wrong 글자가 겹쳐 뜹니다!
-        %     % (1) 최종 위치 (triX, triY)의 삼각형 꼭짓점 3개 다시 계산
-        %     triPoints = [triX - TriSize/2, triY - TriSize/2;
-        %                  triX - TriSize/2, triY + TriSize/2;
-        %                  triX + TriSize/2, triY];
-        %     % (2) 이동 루프에서 쓰던 도형 그리기 4줄을 그대로 복사 (배경 -> 상자 -> 테두리 -> 삼각형)
-        %     Screen('FillRect', window, gray);
-        %     Screen('FillRect', window, target
-        % FillColor, targetRect);
-        %     Screen('FrameRect', window, targetBorderColor, targetRect, 3);
-        %     Screen('FillPoly', window, TriColor, triPoints);
-        %     % (3) 그 다음 아래 DrawFormattedText(글자) -> Screen('Flip') 실행!
-        %
-        % [개선 제안 #2-A (2/2)] 위 if문에서 resultColor를 만들었다면, 아래 줄의 `white`를 `resultColor`로 교체!
+        % [완료 ✅] 결과 화면 도형 다시 그리기 + resultColor 적용 완료!
         triPoints = [triX - TriSize/2, triY - TriSize/2; triX - TriSize/2, triY + TriSize/2; triX + TriSize/2, triY];
         Screen('FillRect', window, gray);
+        % [수정 필요 #3] ★ 변수명 오타 (실행 에러): 이전 주석 줄바꿈 때문에 변수명이 쪼개졌습니다!
+        %   -> 'target, FillColor'를 하나의 변수명 'targetFillColor'로 붙여주세요.
+        %   -> 올바른 코드: Screen('FillRect', window, targetFillColor, targetRect);
         Screen('FillRect', window, target, FillColor, targetRect);
         Screen('FrameRect', window, targetBorderColor, targetRect, 3);
         Screen('FillPoly', window, TriColor, triPoints);
@@ -221,17 +203,7 @@ try
         results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
 
         if trial == restTrials && trial < totalTrials
-            % [완료 ✅] Break Time 키 제한 적용 완료!
-            % [개선 제안 #2-B] 키 잠금 위치 정리 (동작은 지금도 되지만, if 안으로 옮기면 더 깔끔함!)
-            %   이유: 지금처럼 `if` 바로 위·아래에 있으면 휴식이 아닌 1~4회차에도 매번 잠갔다가 바로 풉니다.
-            %   방법: 바깥의 RestrictKeysForKbCheck 2줄을 아래처럼 `if` 안(while true 앞·뒤)으로 옮겨주세요:
-            %     if trial == restTrials && trial < totalTrials
-            %         DrawFormattedText(...);
-            %         Screen('Flip', window);
-            %         RestrictKeysForKbCheck([spaceKey, escKey]); % <- 여기로 이동
-            %         while true ... end
-            %         RestrictKeysForKbCheck([]);                 % <- 여기로 이동
-            %     end
+            % [완료 ✅] Break Time 키 제한을 if 안(Screen('Flip') 아래~while 뒤)으로 깔끔하게 정리 완료!
             DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
             Screen('Flip', window);
             RestrictKeysForKbCheck([spaceKey, escKey]);

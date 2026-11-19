@@ -95,12 +95,10 @@ try
             KbReleaseWait;
             break;
         end
+    end
     % [수정 필요 #1] ★ 중요: 여기 바로 위에 `while true`를 닫는 `end`가 빠져 있어 catch에서 문법 에러가 납니다!
     % [수정 필요 #3 & 질문 답변] 네, 맞습니다! 아래 3줄(if keyCode(escKey) ~ end)은 100% 중복이므로 지워주세요!
     %   (while 안에서 escKey는 이미 검사했고, break로 나온 뒤엔 스페이스를 누른 상태라 실행될 일 없음)
-    if keyCode(escKey) % 왜 또 필요하지? 없어도 되지않나? 중복되는 느낌인데 
-        error('사용자에 의해 중단되었습니다.');
-    end
     % [완료 ✅] RestrictKeysForKbCheck([]) 해제까지 정확히 작성됨!
     RestrictKeysForKbCheck([]);
     for trial = 1:totalTrials
@@ -172,13 +170,16 @@ try
         %   else        안에 `resultColor = [255, 80, 80];` (빨강) 을 한 줄씩 추가해 두고,
         %   아래 DrawFormattedText의 마지막 인수 `white`를 `resultColor`로 바꾸면 됩니다!
         if isInside
+            resultColor = [0, 255, 100];
             resultText = 'correct';
         else
+            resultColor = [255, 80, 80]
             resultText = 'wrong';
         end
 
         % [완료 ✅] Screen('Flip')를 while 밖으로 빼서 결과 글자 사라짐 버그 해결 완료! (while true + KbCheck 유지 굿!)
         RestrictKeysForKbCheck([spaceKey, escKey]);
+
         % [개선 제안 #1] 결과 화면에 타겟·삼각형 함께 표시 (선택 — "도화지에 아래에서 위로 겹쳐 그리기")
         %   왜 필요? Screen('Flip')는 새 도화지를 여는 것이라 글자만 그리면 방금 움직인 상자·삼각형이 사라집니다.
         %   어떻게? 아래 `DrawFormattedText` 바로 위에 아래 순서(1 -> 2 -> 3)대로 코드를 넣으면
@@ -189,14 +190,21 @@ try
         %                  triX + TriSize/2, triY];
         %     % (2) 이동 루프에서 쓰던 도형 그리기 4줄을 그대로 복사 (배경 -> 상자 -> 테두리 -> 삼각형)
         %     Screen('FillRect', window, gray);
-        %     Screen('FillRect', window, targetFillColor, targetRect);
+        %     Screen('FillRect', window, target
+        % FillColor, targetRect);
         %     Screen('FrameRect', window, targetBorderColor, targetRect, 3);
         %     Screen('FillPoly', window, TriColor, triPoints);
         %     % (3) 그 다음 아래 DrawFormattedText(글자) -> Screen('Flip') 실행!
         %
         % [개선 제안 #2-A (2/2)] 위 if문에서 resultColor를 만들었다면, 아래 줄의 `white`를 `resultColor`로 교체!
-        DrawFormattedText(window, resultText, 'center', 'center', white);
+        triPoints = [triX - TriSize/2, triY - TriSize/2; triX - TriSize/2, triY + TriSize/2; triX + TriSize/2, triY];
+        Screen('FillRect', window, gray);
+        Screen('FillRect', window, target, FillColor, targetRect);
+        Screen('FrameRect', window, targetBorderColor, targetRect, 3);
+        Screen('FillPoly', window, TriColor, triPoints);
+        DrawFormattedText(window, resultText, 'center', 'center', resultColor);
         Screen('Flip', window);
+
         while true
             [keyIsDown, ~, keyCode] = KbCheck;
             if keyCode(escKey)
@@ -212,7 +220,6 @@ try
         % 결과 기록 & 절반 지점 휴식
         results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
 
-        RestrictKeysForKbCheck([spaceKey, escKey]);
         if trial == restTrials && trial < totalTrials
             % [완료 ✅] Break Time 키 제한 적용 완료!
             % [개선 제안 #2-B] 키 잠금 위치 정리 (동작은 지금도 되지만, if 안으로 옮기면 더 깔끔함!)
@@ -227,6 +234,7 @@ try
             %     end
             DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
             Screen('Flip', window);
+            RestrictKeysForKbCheck([spaceKey, escKey]);
 
             while true
                 [keyIsDown, ~, keyCode] = KbCheck;
@@ -238,8 +246,8 @@ try
                     break;
                 end
             end
+            RestrictKeysForKbCheck([]);
         end
-        RestrictKeysForKbCheck([]);
     end
 
     %% [Part 4] 결과 저장 (피험자 데이터 덮어쓰기 방지)

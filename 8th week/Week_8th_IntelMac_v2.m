@@ -159,7 +159,7 @@ try
             IsInRect(triX + TriSize/2, triY, targetRect);
         % [수정 필요 #1] ★ 마지막 남은 버그: 아래 옛 코드가 위에서 구한 3점 판정 결과를 덮어쓰고 있습니다!
         %   -> 아래 1줄(`isInside = IsInRect(triX, triY, targetRect);`)을 지우거나 맨 앞에 '%'를 붙여 주석 처리하면 완료됩니다.
-        isInside = IsInRect(triX, triY, targetRect);
+        % isInside = IsInRect(triX, triY, targetRect);
         % [완료 ✅] 정답(초록)/오답(빨강) resultColor 분기 적용 완료! (else 끝 ';' 누락 자동 수정 반영됨)
         if isInside
             resultColor = [0, 255, 100];

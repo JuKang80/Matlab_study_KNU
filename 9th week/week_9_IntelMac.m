@@ -58,7 +58,7 @@ try
     
     % 전체 시행 수 만큼 자극 원 반지름을 저장하는데, 크기를 30부터 150 사이로 정수값이 나오게 조절했다.
     % 30부터 150까지 조정하여 오차범위가 생겨 오답이 나올 수 있게 의도하였다. 
-    stimlus_Circle_radius = randi([30, 150], 1, totalTrials;
+    stimlus_Circle_radius = randi([30, 150], 1, totalTrials);
 
     
     
@@ -108,7 +108,6 @@ try
     % imwrite(screenshot, 'stimulus_result.png');
 
     %% [Part 5] 정상 종료 및 자원 해제
-    KbQueueRelease;
     sca;
     ShowCursor;
     disp('Experiment successfully finished');
@@ -116,7 +115,6 @@ try
 catch info
     % 에러 발생 시 화면 먹통 방지 및 안전한 리소스 복구
     fclose('all');
-    KbQueueRelease;
     sca;
     ShowCursor;
     rethrow(info);

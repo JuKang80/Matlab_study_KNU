@@ -132,7 +132,7 @@ try
        
         % 중심점 기준 (기본): 삼각형 중심(triX, triY)만 들어가면 correct
         % isInside = IsInRect(triX, triY, targetRect);
-        % 하지만 각 그런 방식보다 각 꼭짓점 3개 중 1개라도 타겟에 들어오면 정답으로 처리하였다
+        % 하지만 각 그런 방식보다 각 꼭짓점 3개 중 1개라도 타겟에 들어오면 정답으로 처리함
         isInside = IsInRect(triX - TriSize/2, triY - TriSize/2, targetRect) || ... % 왼쪽 위 꼭짓점
                    IsInRect(triX - TriSize/2, triY + TriSize/2, targetRect) || ... % 왼쪽 아래 꼭짓점
                    IsInRect(triX + TriSize/2, triY,             targetRect);       % 오른쪽 끝 꼭짓점
@@ -158,7 +158,7 @@ try
         % 도형 위에 결과 문구('correct'=초록 / 'wrong'=빨강) 그리기
         DrawFormattedText(window, resultText, 'center', 'center', resultColor);
 
-        % while 전Flip (화면이 고정된 채 스페이스 대기)
+        % while 전 Flip 
         Screen('Flip', window);
 
         RestrictKeysForKbCheck([spaceKey, escKey]);
@@ -175,7 +175,7 @@ try
         RestrictKeysForKbCheck([]); % 키 제한 해제
 
        
-        % trial번째 행의 모든 열에 8가지 정보(시행번호, 최종좌표X/Y, 타겟 L/T/R/B, 정답여부)를 채움
+        % trial번째 행의 모든 열에 8가지 정보(시행번호, 최종좌표X/Y, 타겟 왼/오/위/아래 좌표, 정답여부)
         results(trial, :) = {trial, triX, triY, targetRect(1), targetRect(2), targetRect(3), targetRect(4), resultText};
 
         % 절반 시행이 지났을 때 휴식 시간 부여

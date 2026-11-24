@@ -34,17 +34,44 @@ try
     screenHeight = windowRect(4);
     [centerX, centerY] = RectCenter(windowRect);
 
-    %% TODO: 과제에 필요한 도형 크기, 색상, 좌표, 타이머 변수 등을 여기에 선언하세요.
+    % 시행 수 정의
+    totalTrials = 20;
+    restTrials = floor(totalTrials / 2);
+
+    % 키보드 정의
+    spaceKey = KbName('space');
+    escKey = KbName('ESCAPE');
+    xKey     = KbName('x'); % 크기가 다른 경우를 위한 입력 키
+
+    % 고정점 미리 정의 (나중에 center로 옮기면 돼서 지금은 좌표 (0,0)으로 선언함. 
+    fixCoords = [-15, 15, 0, 0; 0, 0, -15, 15];
+
+    % 원의 색 자체는 미리 선언해두는게 좋을것 같다. 랜덤한 값 보단 그냥 고점된 하나의 값(인지 실험에 영향 안받게)으로 하자. 
+    % 색을 따로 선언한 이유는 혹시 색에 따라 무언가 달라지는걸 보기 위한 목적이 생긴다면 따로 해야할거 같아서 따로 변수로 저장했다. 
+    target_Circle_color = white; % 색은 일단 화이트로 했다. 
+    stimlus_Circle_color = white; 
+    
+    result = []; % 데이터 기록용 빈 배열
+    
+    % 전체 시행 수 만큼 타겟 원 반지름을 저장하는데, 크기를 60부터 100 사이로 정수값이 나오게 조절했다. 
+    target_Circle_radius = randi([60, 100], 1, totalTrials); 
+    
+    % 전체 시행 수 만큼 자극 원 반지름을 저장하는데, 크기를 30부터 150 사이로 정수값이 나오게 조절했다.
+    % 30부터 150까지 조정하여 오차범위가 생겨 오답이 나올 수 있게 의도하였다. 
+    stimlus_Circle_radius = randi([30, 150], 1, totalTrials;
+
+    
+    
+
     % 랜덤한 원이 필요한데... 시행 단위로 해야해서 week 8에서 사용한 for문을 가져와야 할 것 같다.
     % 그전에, 원이 필요하니 일단 원을 만드는 코드를 넣자. 랜덤하게 사이즈가 나와야 할것 같다. 
     
+    % 이후 고정점이 필요하면 Screen('DrawLines', window, fixCoords, 3, white, [centerX, centerY]); 이 한 줄로 호출하면 됨 
+
+    % 그리고 원에 대한 처리를 하자. 
+    
 
     
-    history = []; % 데이터 기록용 빈 배열
-
-    % 비동기 키보드 입력 감지 큐 시작
-    KbQueueCreate;
-    KbQueueStart;
 
     %% [Part 3] 메인 루프 (화면 전환 및 자극 제시)
     while true

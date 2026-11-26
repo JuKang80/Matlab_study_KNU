@@ -37,40 +37,38 @@ try
     % 시행 수 정의
     totalTrials = 20;
     restTrials = floor(totalTrials / 2);
-    correctCount = 0; % 누적 정답 숫자 세기용     
-    
-    
+    trial = 0; % 시행횟수를 세기 위함이다.
 
     % 키보드 정의
+    leftKey = KbName('LeftArrow');
+    rightKey = KbName('RightArrow');
+    upKey = KbName('UpArrow');
+    downKey = KbName('DownArrow');
     spaceKey = KbName('space');
     escKey = KbName('ESCAPE');
-    xKey     = KbName('x'); % 크기가 다른 경우를 위한 입력 키
+
+    % 조절하는 용도
+    sizeStep = 10; % 한번 누를 때 변화량. 
+    tolerance = 20; % 얼마나 오차를 허용할 것인지. 일단 20으로 설정하였다. 
+
+    % 중간에 휴식을 취했는지 확인하는 변수도 필요하다. 
+    Break = false; 
 
     % 고정점 미리 정의 (나중에 center로 옮기면 돼서 지금은 좌표 (0,0)으로 선언함. 
     fixCoords = [-15, 15, 0, 0; 0, 0, -15, 15];
 
     % 원의 색 자체는 미리 선언해두는게 좋을것 같다. 랜덤한 값 보단 그냥 고점된 하나의 값(인지 실험에 영향 안받게)으로 하자. 
     % 색을 따로 선언한 이유는 혹시 색에 따라 무언가 달라지는걸 보기 위한 목적이 생긴다면 따로 해야할거 같아서 따로 변수로 저장했다. 
-    target_Circle_color = white; % 색은 일단 화이트로 했다. 
-    stimulus_Circle_color = white; 
-    
-    result = []; % 데이터 기록용 빈 배열
-    
-    % 전체 시행 수 만큼 타겟 원 반지름을 저장하는데, 크기를 60부터 100 사이로 정수값이 나오게 조절했다. 
-    target_Circle_radius = randi([60, 100], 1, totalTrials); 
-    
-    % 보고 정답을 맞출 자극들을 만든다. 
-    % 원이 플마 10안에 있으면 같은 것으로 간주한다. 
-    stimulus_Circle_radius = zeros(1, totalTrials);
-    stimulus_Circle_radius(1:10)  = target_Circle_radius(1:10)  + randi([-10, 10], 1, 10);
-    stimulus_Circle_radius(11:20) = target_Circle_radius(11:20) + randi([60, 100], 1, 10);
+    stimulus_Circle_color = white;
+
+    result = {}; % 데이터 기록용 빈 배열. 문자열(correct, wrong)도 같이 담아야 하기에 {} 사용
 
     % 처음 시작 시 랜딩 화면이다. 
     DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
     Screen('Flip', window);
     RestrictKeysForKbCheck([spaceKey, escKey]);
     while true
-        [keyIsDown, ~, keyCode] = KbCheck; 
+        [keyIsDown, ~, keyCode] = KbCheck;
         if keyCode(escKey)
             error('사용자에 의해 중단되었습니다.');
         end
@@ -81,50 +79,15 @@ try
     end
     RestrictKeysForKbCheck([]);
 
-    answer = [ones(1, 10), zeros(1, 10)]; % 1은 크기가 같은 것, 2는 크기가 다른것
-    order = randperm(totalTrials); % 문제 순서 섞기 
-    frameTime = Screen('GetFlipInterval', window); % 1프레임 시간 가져온다. 
+    frameTime = Screen('GetFlipInterval', window); % 1프레임 시간 가져온다.
 
-    
-    
-
-    
-
-    %% [Part 3] 메인 루프 (화면 전환 및 자극 제시)
-    while true
-        % 1. 상태 업데이트 및 좌표 계산
-        % TODO: 이동, 회전, 난수 생성 등 로직 작성
-
-        % 2. 화면 버퍼 초기화 (배경 칠하기)
-        Screen('FillRect', window, gray);
-
-        % 3. 도형 / 선 / 텍스트 그리기
-        % TODO: Screen('FillOval'), Screen('DrawLine'), DrawFormattedText 등 작성
-        DrawFormattedText(window, 'Press ESC to Exit', 'center', centerY, white);
-
-        % 4. 그린 요소를 실제 화면으로 전환(Flip)
-        Screen('Flip', window);
-
-        % 5. ESC 키 강제 종료 확인
-        [pressed, firstPress] = KbQueueCheck;
-        if pressed && firstPress(KbName('ESCAPE'))
-            break;
-        end
-
-        % 6. 프레임/타이머 대기 (필요 시 조절)
-        WaitSecs(0.05);
+    % --- 여기서부터 메인 루프 작성 
+    for trial = 1:totalTrials
+        
     end
 
-    %% [Part 4] 결과 저장 (필요 시 주석 해제하여 사용)
-    % --- (옵션 A) 표(Table) 형태로 CSV 저장 ---
-    % resultTable = array2table(history, 'VariableNames', {'Col1', 'Col2'});
-    % writetable(resultTable, 'result.csv');
+    
 
-    % --- (옵션 B) 현재 화면 스크린샷 이미지 저장 ---
-    % screenshot = Screen('GetImage', window);
-    % imwrite(screenshot, 'stimulus_result.png');
-
-    %% [Part 5] 정상 종료 및 자원 해제
     sca;
     ShowCursor;
     disp('Experiment successfully finished');

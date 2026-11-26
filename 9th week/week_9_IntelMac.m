@@ -29,6 +29,7 @@ try
 
     Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA'); % 알파블렌딩
     Screen('TextSize', window, 24); % 기본 폰트 크기 설정
+    HideCursor; % 실험 중 마우스 커서 숨기기
 
     screenWidth = windowRect(3);
     screenHeight = windowRect(4);
@@ -156,22 +157,12 @@ try
             resultText = 'wrong';
         end
 
-        RestrictKeysForKbCheck([spaceKey, escKey]);
+        % 피드백 1.0초 표시 후 자동으로 다음 시행 진행 (예약 Flip)
         Screen('FillRect', window, gray);
         DrawFormattedText(window, resultText, 'center', 'center', resultColor);
-        Screen('Flip', window);
-
-        while true
-            [keyIsDown, ~, keyCode] = KbCheck;
-            if keyCode(escKey)
-                error('사용자에 의해 중단되었습니다.');
-            end
-            if keyCode(spaceKey)
-                KbReleaseWait;
-                break;
-            end
-        end
-        RestrictKeysForKbCheck([]);
+        tFb = Screen('Flip', window);
+        Screen('FillRect', window, gray);
+        Screen('Flip', window, tFb + 1.0 - 0.5 * frameTime);
 
         % 시행 결과 1줄 기록 (10개 열)
         result(trial, :) = {trial, initUserSize, userSize, targetSize, userRadius, targetRadius, sizeError, abserror, rt, resultText};

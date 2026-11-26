@@ -136,6 +136,9 @@ try
 
              % Flip하여 보여준다. 
              Screen('Flip', window);
+        end
+                
+        RestrictKeysForKbCheck([]);
 
              isCorrect = abs(userSize - targetSize) <= tolerance;
 
@@ -205,8 +208,8 @@ try
              timeStr = string(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
              fileName = sprintf('week9_result_%s.csv', timeStr);
              writetable(resultTable, fileName);
-        end
-
+             tEnd = Screen('Flip', window);
+             Screen('Flip', window, tEnd + 2.0 - 0.5 * frameTime);
     end
 
     
@@ -216,10 +219,9 @@ try
     disp('Experiment successfully finished');
 
 catch info
-    % 에러 발생 시 화면 먹통 방지 및 안전한 리소스 복구
+    RestrictKeysForKbCheck([]);
     fclose('all');
     sca;
     ShowCursor;
     rethrow(info);
-    RestrictKeysForKbCheck([]);
 end

@@ -106,11 +106,39 @@ try
         % 이제 사용자가 움직일 원을 제시해야 한다. 
         userRect = CenterRectOnPointd([0, 0, userSize, userSize], centerX, centerY);
         Screen('FillRect', window, gray);
-        Screen('FillOval', window, stimulus_Circle_color, userRect
+        Screen('FillOval', window, stimulus_Circle_color, userRect);
         % 0.2초 뒤에 사용자가 조절할 원이 나오게 했다. 
         t = Screen('Flip', window, t + 0.2 - 0.5*frameTime);
-
         
+        while true
+            [keyIsDown, ~, keyCode] = kbCheck; 
+            if keyCode(upKey) || keyCode(rightKey)
+                userSize = min(screenHeight - 50, userSize + sizeStep); % 키우기
+                % KbReleaseWait; % 부드럽게 하기 위해 주석처리함
+            end
+            if keyCode(downKey) || keyCode(leftKey)
+                userSize = max(20, userSize - sizeStep); % 줄이기
+                % KbReleaseWait; % 부드럽게 하기 위해 주석처리함
+            end
+            if keyCode(spaceKey)
+                KbReleaseWait;
+                break;
+            end
+            if keyCode(escKey)
+                error('사용자에 의해 중단되었습니다.');
+            end
+            % 바뀐 크기로 다시 그리기. 
+            userRect = CenterRectOnPointd([0, 0, userSize, userSize], centerX, centerY);
+            Screen('FillRect', window, gray);
+            Screen('FillOval', window, stimulus_Circle_color, userRect);
+            
+             DrawFormattedText(window, sprintf('Trial %d/%d (Correct: %d/%d)', trial, totalTrials, correctCount, targetCorrect), 40, 40, white);
+
+             % Flip하여 보여준다. 
+             Screen('Flip', window);
+
+        end
+
     end
 
     

@@ -47,7 +47,7 @@ try
     escKey = KbName('ESCAPE');
 
     % 조절하는 용도
-    sizeStep = 10; % 한번 누를 때 변화량. 
+    sizeStep = 3; % 한번 누를 때 변화량. 
     tolerance = 20; % 얼마나 오차를 허용할 것인지. 일단 20으로 설정하였다. 
 
     % 고정점 미리 정의 (나중에 center로 옮기면 돼서 지금은 좌표 (0,0)으로 선언함. 
@@ -111,7 +111,7 @@ try
         t = Screen('Flip', window, t + 0.2 - 0.5*frameTime);
         
         while true
-            [keyIsDown, ~, keyCode] = kbCheck; 
+            [keyIsDown, ~, keyCode] = KbCheck; 
             if keyCode(upKey) || keyCode(rightKey)
                 userSize = min(screenHeight - 50, userSize + sizeStep); % 키우기
                 % KbReleaseWait; % 부드럽게 하기 위해 주석처리함
@@ -137,6 +137,74 @@ try
              % Flip하여 보여준다. 
              Screen('Flip', window);
 
+             isCorrect = abs(userSize - targetSize) <= tolerance;
+
+             if isCorrect
+                 correctCount = correctCount + 1;
+                 resultColor = [0, 255, 100];
+                 resultText = 'correct';
+             else
+                 resultColor = [255, 80, 80];
+                 resultText = 'wrong';
+             end
+             RestrictKeysForKbCheck([spaceKey, escKey]);
+             Screen('FillRect', window, gray);
+             DrawFormattedText(window, resultText, 'center', 'center', resultColor);
+             Screen('Flip', window);
+
+             while true
+                 [keyIsDown, ~, keyCode] = KbCheck;
+                 if keyCode(escKey)
+                     error('사용자에 의해 중단되었습니다.');
+                 end
+                 if keyCode(spaceKey)
+                     KbReleaseWait;
+                     break;
+                 end
+             end
+             result(trial, :) = {trial, userSize, targetSize, resultText};
+
+             % 휴식보다 먼저 체크. 정답 10개시 종료
+             if correctCount >= targetCorrect
+                 break;
+             end
+
+             % 절반 지점 휴식
+             if trial == restTrials && trial < totalTrials
+                 Screen('FillRect', window, gray);
+                 DrawFormattedText(window, 'Break Time! Press SPACE to continue', 'center', 'center', white);
+                 Screen('Flip', window);
+                 RestrictKeysForKbCheck([spaceKey, escKey]);
+
+                 while true
+                     [keyIsDown, ~, keyCode] = KbCheck;
+                     if keyCode(escKey)
+                         error('사용자에 의해 중단되었습니다.');
+                     end
+                     if keyCode(spaceKey)
+                         KbReleaseWait;
+                         break;
+                     end
+                 end
+                 RestrictKeysForKbCheck([]);
+             end
+             
+             Screen('FillRect', window, gray);
+
+             if correctCount >= targetCorrect
+                 endText = sprintf('Great Job! You got %d correct in %d trials!', correctCount, trial);
+             else
+                 endText = sprintf('Experiment Finished! (%d/%d correct)', correctCount, targetCorrect);
+             end
+
+             DrawFormattedText(window, endText, 'center', 'center', white);
+             Screen('Flip', window);
+             
+             colNames = {'Trial', 'UserSize', 'TargetSize', 'Result'};
+             resultTable = cell2table(result, 'VariableNames', colNames);
+             timeStr = string(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
+             fileName = sprintf('week9_result_%s.csv', timeStr);
+             writetable(resultTable, fileName);
         end
 
     end
@@ -153,4 +221,5 @@ catch info
     sca;
     ShowCursor;
     rethrow(info);
+    RestrictKeysForKbCheck([]);
 end

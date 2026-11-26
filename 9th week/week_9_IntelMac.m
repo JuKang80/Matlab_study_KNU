@@ -37,14 +37,11 @@ try
     % 시행 수 정의
     totalTrials = 20;
     restTrials = floor(totalTrials / 2);
-    trial = 0; % 시행횟수를 세기 위함이다.
     targetCorrect = 10; 
     correctCount = 0;
 
     % 키보드 정의
-    leftKey = KbName('LeftArrow');
-    rightKey = KbName('RightArrow');
-    upKey = KbName('UpArrow');
+    upKey = KbName('UpArrow'); % 위로 누르면 커지고 아래로 누르면 작아지게 할 것이다. 
     downKey = KbName('DownArrow');
     spaceKey = KbName('space');
     escKey = KbName('ESCAPE');
@@ -52,9 +49,6 @@ try
     % 조절하는 용도
     sizeStep = 10; % 한번 누를 때 변화량. 
     tolerance = 20; % 얼마나 오차를 허용할 것인지. 일단 20으로 설정하였다. 
-
-    % 중간에 휴식을 취했는지 확인하는 변수도 필요하다. 
-    Break = false; 
 
     % 고정점 미리 정의 (나중에 center로 옮기면 돼서 지금은 좌표 (0,0)으로 선언함. 
     fixCoords = [-15, 15, 0, 0; 0, 0, -15, 15];
@@ -87,12 +81,23 @@ try
     for trial = 1:totalTrials
         targetSzie = randi([100, 300]); % 제시할 원 지름 
         userSize = randi([80, 320]); % 사용자가 조절한 원 지름
+
+        % 고정점 제시 전 배경화면 그리기 
+        Screen('FillRect', window, gray);
+
+        % 고정점을 그린다. 
+        Screen('DrawLines', window, fixCoords, 3, white, [centerX, centerY]);
+        
+        % 시간을 저장해 둔다. 
+        t = Screen('Flip', window, t + 0.5 - 0.5*frameTime);
         
         % 원 그릴 차례 
-        targetRect = CenterRectOnPointd([0,0, targetSzie, targetSzie], centerX, centerY);
+        targetRect = CenterRectOnPointd([0,0, targetSize, targetSize], centerX, centerY);
 
         % 그림을 그려 놓는다 
         Screen('FillOval', window, stimulus_Circle_color, targetRect);
+
+        Screen('FillRect', window, gray);
 
         
     end

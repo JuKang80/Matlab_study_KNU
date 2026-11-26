@@ -79,7 +79,7 @@ try
 
     % --- 여기서부터 메인 루프 작성 
     for trial = 1:totalTrials
-        targetSzie = randi([100, 300]); % 제시할 원 지름 
+        targetSize = randi([100, 300]); % 제시할 원 지름 
         userSize = randi([80, 320]); % 사용자가 조절한 원 지름
 
         % 고정점 제시 전 배경화면 그리기 
@@ -89,15 +89,21 @@ try
         Screen('DrawLines', window, fixCoords, 3, white, [centerX, centerY]);
         
         % 시간을 저장해 둔다. 
-        t = Screen('Flip', window, t + 0.5 - 0.5*frameTime);
-        
+        t = Screen('Flip', window);
+
+        Screen('Flip', window);
+
+        Screen('FillRect', window, gray);
+
         % 원 그릴 차례 
         targetRect = CenterRectOnPointd([0,0, targetSize, targetSize], centerX, centerY);
 
         % 그림을 그려 놓는다 
         Screen('FillOval', window, stimulus_Circle_color, targetRect);
 
-        Screen('FillRect', window, gray);
+        Screen('Flip', window);
+        
+        
 
         
     end

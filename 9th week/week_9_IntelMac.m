@@ -84,26 +84,31 @@ try
 
         % 고정점 제시 전 배경화면 그리기 
         Screen('FillRect', window, gray);
-
         % 고정점을 그린다. 
         Screen('DrawLines', window, fixCoords, 3, white, [centerX, centerY]);
-        
-        % 시간을 저장해 둔다. 
+        % 고정점이 뜬 시간을 저장해 둔다. 
         t = Screen('Flip', window);
 
-        Screen('Flip', window);
-
+        % 백 버퍼에 그림을 그린다. 
         Screen('FillRect', window, gray);
-
         % 원 그릴 차례 
         targetRect = CenterRectOnPointd([0,0, targetSize, targetSize], centerX, centerY);
-
         % 그림을 그려 놓는다 
         Screen('FillOval', window, stimulus_Circle_color, targetRect);
 
-        Screen('Flip', window);
+        % 고정점 뜬지 0.5초 뒤에 원으로 교체ㅐ하고 원이 뜬 시간을 t에 다시 저장한다. 
+        t = Screen('Flip', window, t + 0.5 - 0.5*frameTime);
+
+        % 원이 나온지 1.0초 뒤에 빈 회색 화면으로 교체하여 원을 사라지게 한다. 
+        Screen('FillRect', window, gray);
+        t = Screen('Flip', window, t + 1.0 - 0.5*frameTime);        
         
-        
+        % 이제 사용자가 움직일 원을 제시해야 한다. 
+        userRect = CenterRectOnPointd([0, 0, userSize, userSize], centerX, centerY);
+        Screen('FillRect', window, gray);
+        Screen('FillOval', window, stimulus_Circle_color, userRect
+        % 0.2초 뒤에 사용자가 조절할 원이 나오게 했다. 
+        t = Screen('Flip', window, t + 0.2 - 0.5*frameTime);
 
         
     end

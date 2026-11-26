@@ -146,8 +146,8 @@ try
     % ---------------------------------------------------------------------
     % 2-3. 자극 조절·오차·고정점·색상·결과 저장 배열 설정
     % ---------------------------------------------------------------------
-    sizeStep  = 3;  % 꾹 누르기(연속 조절) 모드에서 1프레임당 변하는 지름 크기(픽셀)
-    tolerance = 20; % 정답 인정 오차범위: |조절 지름 - 제시 지름| <= 20px 이면 correct
+    sizeStep  = 3;   % 꾹 누르기(연속 조절) 모드에서 1프레임당 변하는 지름 크기(픽셀)
+    tolerance = 100; % 정답 인정 오차범위: |조절 지름 - 제시 지름| <= tolerance 이면 correct
 
     % [고정점(+) 상대 좌표 행렬 (2행 x 4열)]
     % - Screen('DrawLines')는 2열씩 짝지어 선 1개(시작점 -> 끝점)를 그림
@@ -356,10 +356,10 @@ try
         % -----------------------------------------------------------------
         Screen('FillRect', window, gray);
         DrawFormattedText(window, resultText, 'center', 'center', resultColor);
-        % 피드백이 실제 화면에 뜬 시각(tFb)을 기록한 뒤, 정확히 1.0초 후 빈 화면으로 자동 전환
-        tFb = Screen('Flip', window);
+        % 피드백이 실제 화면에 뜬 시각(time_Feedback)을 기록한 뒤, 정확히 1.0초 후 빈 화면으로 자동 전환
+        time_Feedback = Screen('Flip', window);
         Screen('FillRect', window, gray);
-        Screen('Flip', window, tFb + 1.0 - 0.5 * ifi);
+        Screen('Flip', window, time_Feedback + 1.0 - 0.5 * ifi);
 
         % -----------------------------------------------------------------
         % [단계 F] 현재 시행 결과 1줄 기록 (10개 열)
@@ -397,16 +397,16 @@ try
     %% [Part 4] 종료(칭찬/완료) 화면 & CSV 결과 파일 저장
     Screen('FillRect', window, gray);
     if correctCount >= targetCorrect
-        endText = sprintf('Great Job! You got %d correct in %d trials!', correctCount, trial);
+        endText = sprintf('Great Job! WELL DONE!! :) You got %d correct in %d trials!', correctCount, trial);
     else
-        endText = sprintf('Experiment Finished! (%d/%d correct)', correctCount, targetCorrect);
+        endText = sprintf('Experiment Finished!:) (%d/%d correct)', correctCount, targetCorrect);
     end
     DrawFormattedText(window, endText, 'center', 'center', white);
 
     % WaitSecs(2) 대신 예약 Flip으로 종료 화면을 정확히 2.0초 유지한 뒤 닫기
-    tEnd = Screen('Flip', window);
+    time_End = Screen('Flip', window);
     Screen('FillRect', window, gray);
-    Screen('Flip', window, tEnd + 2.0 - 0.5 * ifi);
+    Screen('Flip', window, time_End + 2.0 - 0.5 * ifi);
 
     % [cell2table(C, 'VariableNames', colNames)]
     % - 인자 1 (result)          : 숫자와 문자열이 섞여 있는 N x 10 셀 배열

@@ -37,7 +37,7 @@ try
     % 시행 수 정의
     totalTrials = 20;
     restTrials = floor(totalTrials / 2);
-    correctCount = 0; % 누적 정답 숫자 세기용 
+    correctCount = 0; % 누적 정답 숫자 세기용     
     
     
 
@@ -59,10 +59,12 @@ try
     % 전체 시행 수 만큼 타겟 원 반지름을 저장하는데, 크기를 60부터 100 사이로 정수값이 나오게 조절했다. 
     target_Circle_radius = randi([60, 100], 1, totalTrials); 
     
-    % 전체 시행 수 만큼 자극 원 반지름을 저장하는데, 크기를 30부터 150 사이로 정수값이 나오게 조절했다.
-    % 30부터 150까지 조정하여 오차범위가 생겨 오답이 나올 수 있게 의도하였다. 
-    stimulus_Circle_radius = randi([30, 150], 1, totalTrials);
-
+    % 보고 정답을 맞출 자극들을 만든다. 
+    % 원이 플마 10안에 있으면 같은 것으로 간주한다. 
+    stimulus_Circle_radius = zeros(1, totalTrials);
+    stimulus_Circle_radius(1:10)  = target_Circle_radius(1:10)  + randi([-10, 10], 1, 10);
+    stimulus_Circle_radius(11:20) = target_Circle_radius(11:20) + randi([60, 100], 1, 10);
+   
     
     
 

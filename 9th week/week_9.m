@@ -162,14 +162,14 @@ try
 
         sizeError = userSize - targetSize; % 부호 포함 오차
         abserror  = abs(sizeError);        % 오차 절댓값 
-        isCorrect = abserror <= tolerance; % 절대 오차가 허용 오차(20px) 이하이면 정답(true)
+        isCorrect = abserror <= tolerance; % 절대 오차가 허용 오차 이하이면 정답(true)
 
         if isCorrect
             correctCount = correctCount + 1;
             resultColor  = [0, 255, 100]; % 초록색 
             resultText   = 'correct';
         else
-            resultColor  = [255, 80, 80]; % 빨간색ㄴ
+            resultColor  = [255, 80, 80]; % 빨간색
             resultText   = 'wrong';
         end
 

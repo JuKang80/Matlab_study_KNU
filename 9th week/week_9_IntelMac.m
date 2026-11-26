@@ -39,6 +39,7 @@ try
     restTrials = floor(totalTrials / 2);
     correctCount = 0; % 누적 정답 숫자 세기용 
     
+    
 
     % 키보드 정의
     spaceKey = KbName('space');
@@ -51,7 +52,7 @@ try
     % 원의 색 자체는 미리 선언해두는게 좋을것 같다. 랜덤한 값 보단 그냥 고점된 하나의 값(인지 실험에 영향 안받게)으로 하자. 
     % 색을 따로 선언한 이유는 혹시 색에 따라 무언가 달라지는걸 보기 위한 목적이 생긴다면 따로 해야할거 같아서 따로 변수로 저장했다. 
     target_Circle_color = white; % 색은 일단 화이트로 했다. 
-    stimlus_Circle_color = white; 
+    stimulus_Circle_color = white; 
     
     result = []; % 데이터 기록용 빈 배열
     
@@ -60,7 +61,7 @@ try
     
     % 전체 시행 수 만큼 자극 원 반지름을 저장하는데, 크기를 30부터 150 사이로 정수값이 나오게 조절했다.
     % 30부터 150까지 조정하여 오차범위가 생겨 오답이 나올 수 있게 의도하였다. 
-    stimuㅇ/lus_Circle_radius = randi([30, 150], 1, totalTrials);
+    stimulus_Circle_radius = randi([30, 150], 1, totalTrials);
 
     
     
@@ -71,7 +72,23 @@ try
     % 이후 고정점이 필요하면 Screen('DrawLines', window, fixCoords, 3, white, [centerX, centerY]); 이 한 줄로 호출하면 됨 
 
     % 그리고 원에 대한 처리를 하자. 
-    
+
+
+    % 처음 시작 시 랜딩 화면이다. 
+    DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
+    Screen('Flip', window);
+    RestrictKeysForKbCheck([spaceKey, escKey]);
+    while true
+        [keyIsDown, ~, keyCode] = KbCheck; 
+        if keyCode(escKey)
+            error('사용자에 의해 중단되었습니다.');
+        end
+        if keyCode(spaceKey)
+            KbReleaseWait;
+            break;
+        end
+    end
+    RestrictKeysForKbCheck([]);
 
     
 

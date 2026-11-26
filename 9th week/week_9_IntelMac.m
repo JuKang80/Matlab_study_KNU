@@ -37,6 +37,8 @@ try
     % 시행 수 정의
     totalTrials = 20;
     restTrials = floor(totalTrials / 2);
+    correctCount = 0; % 누적 정답 숫자 세기용 
+    
 
     % 키보드 정의
     spaceKey = KbName('space');

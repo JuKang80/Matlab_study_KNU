@@ -60,7 +60,7 @@ try
     
     % 전체 시행 수 만큼 자극 원 반지름을 저장하는데, 크기를 30부터 150 사이로 정수값이 나오게 조절했다.
     % 30부터 150까지 조정하여 오차범위가 생겨 오답이 나올 수 있게 의도하였다. 
-    stimlus_Circle_radius = randi([30, 150], 1, totalTrials);
+    stimuㅇ/lus_Circle_radius = randi([30, 150], 1, totalTrials);
 
     
     

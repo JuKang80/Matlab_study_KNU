@@ -38,6 +38,8 @@ try
     totalTrials = 20;
     restTrials = floor(totalTrials / 2);
     trial = 0; % 시행횟수를 세기 위함이다.
+    targetCorrect = 10; 
+    correctCount = 0;
 
     % 키보드 정의
     leftKey = KbName('LeftArrow');
@@ -83,6 +85,15 @@ try
 
     % --- 여기서부터 메인 루프 작성 
     for trial = 1:totalTrials
+        targetSzie = randi([100, 300]); % 제시할 원 지름 
+        userSize = randi([80, 320]); % 사용자가 조절한 원 지름
+        
+        % 원 그릴 차례 
+        targetRect = CenterRectOnPointd([0,0, targetSzie, targetSzie], centerX, centerY);
+
+        % 그림을 그려 놓는다 
+        Screen('FillOval', window, stimulus_Circle_color, targetRect);
+
         
     end
 

@@ -64,17 +64,6 @@ try
     stimulus_Circle_radius = zeros(1, totalTrials);
     stimulus_Circle_radius(1:10)  = target_Circle_radius(1:10)  + randi([-10, 10], 1, 10);
     stimulus_Circle_radius(11:20) = target_Circle_radius(11:20) + randi([60, 100], 1, 10);
-   
-    
-    
-
-    % 랜덤한 원이 필요한데... 시행 단위로 해야해서 week 8에서 사용한 for문을 가져와야 할 것 같다.
-    % 그전에, 원이 필요하니 일단 원을 만드는 코드를 넣자. 랜덤하게 사이즈가 나와야 할것 같다. 
-    
-    % 이후 고정점이 필요하면 Screen('DrawLines', window, fixCoords, 3, white, [centerX, centerY]); 이 한 줄로 호출하면 됨 
-
-    % 그리고 원에 대한 처리를 하자. 
-
 
     % 처음 시작 시 랜딩 화면이다. 
     DrawFormattedText(window, 'Press SPACE to start', 'center', 'center', white);
@@ -91,6 +80,13 @@ try
         end
     end
     RestrictKeysForKbCheck([]);
+
+    answer = [ones(1, 10), zeros(1, 10)]; % 1은 크기가 같은 것, 2는 크기가 다른것
+    order = randperm(totalTrials); % 문제 순서 섞기 
+    frameTime = Screen('GetFlipInterval', window); % 1프레임 시간 가져온다. 
+
+    
+    
 
     
 
